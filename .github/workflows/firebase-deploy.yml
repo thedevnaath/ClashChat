@@ -12,7 +12,7 @@ jobs:
     env:
       PROJECT_ID: clashchatz
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      GOOGLE_APPLICATION_CREDENTIALS: $HOME/gcp-key.json
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
 
     steps:
       - name: Checkout repo
@@ -41,3 +41,5 @@ jobs:
 
       - name: Deploy to Firebase Hosting & Functions
         run: firebase deploy --only hosting,functions --project $PROJECT_ID
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
