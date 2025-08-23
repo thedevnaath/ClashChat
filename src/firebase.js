@@ -21,7 +21,7 @@ const app = initializeApp(firebaseConfig);
 // Auth & Database
 export const auth = getAuth(app);
 export const database = getDatabase(app);
-
+export const db = database;
 // Google Sign-In provider
 export const provider = new GoogleAuthProvider();
 
