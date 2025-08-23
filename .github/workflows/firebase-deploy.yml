@@ -23,12 +23,13 @@ jobs:
           cd ..
           npm install
 
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
       - name: Authenticate with Service Account
         run: |
           echo "$GCP_SA_KEY" > "$HOME/gcp-key.json"
-          gcloud auth activate-service-account --key-file="$HOME/gcp-key.json"
-          gcloud config set project $(jq -r .project_id "$HOME/gcp-key.json")
-
+          export GOOGLE_APPLICATION_CREDENTIALS="$HOME/gcp-key.json"
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
@@ -37,3 +38,5 @@ jobs:
 
       - name: Deploy to Firebase
         run: firebase deploy --only hosting,functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
