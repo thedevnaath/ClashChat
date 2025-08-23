@@ -8,8 +8,14 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    env:
+      PROJECT_ID: clashchatz        # <-- Replace with your Firebase Project ID
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -26,17 +32,16 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Authenticate with Service Account
+      - name: Authenticate Firebase with Service Account
         run: |
           echo "$GCP_SA_KEY" > "$HOME/gcp-key.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$HOME/gcp-key.json"
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          firebase use $PROJECT_ID
 
       - name: Build React App
         run: npm run build
 
-      - name: Deploy to Firebase
-        run: firebase deploy --only hosting,functions
+      - name: Deploy to Firebase Hosting & Functions
+        run: firebase deploy --only hosting,functions --project $PROJECT_ID
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
