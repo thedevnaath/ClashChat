@@ -1,0 +1,39 @@
+name: Firebase Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd functions
+          npm install
+          cd ..
+          npm install
+
+      - name: Authenticate with Service Account
+        run: |
+          echo "$GCP_SA_KEY" > "$HOME/gcp-key.json"
+          gcloud auth activate-service-account --key-file="$HOME/gcp-key.json"
+          gcloud config set project $(jq -r .project_id "$HOME/gcp-key.json")
+
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Build React App
+        run: npm run build
+
+      - name: Deploy to Firebase
+        run: firebase deploy --only hosting,functions
