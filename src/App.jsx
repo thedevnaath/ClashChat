@@ -17,8 +17,10 @@ export default function App() {
 
   useEffect(() => {
     const q = query(collection(db, "topics"), where("status", "==", "active"));
-    const unsubscribe = onSnapshot(q, snapshot => {
-      if (!snapshot.empty) setTopic({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        setTopic({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -33,4 +35,4 @@ export default function App() {
       {topic && <ResultBox topic={topic} />}
     </div>
   );
-        }
+}
