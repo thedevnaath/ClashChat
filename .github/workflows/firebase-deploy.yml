@@ -28,12 +28,12 @@ jobs:
       # 3. Install React dependencies (frontend)
       - name: Install React dependencies
         run: npm install
-        working-directory: ./    # React root folder
+        working-directory: ./ClashChat
 
       # 4. Install Firebase functions dependencies (backend)
       - name: Install Firebase Functions dependencies
         run: npm install
-        working-directory: ./functions
+        working-directory: ./ClashChat/functions
 
       # 5. Install Firebase CLI
       - name: Install Firebase CLI
@@ -46,7 +46,7 @@ jobs:
       # 7. Build React app
       - name: Build React App
         run: npm run build
-        working-directory: ./    # React root folder
+        working-directory: ./ClashChat
 
       # 8. Deploy to Firebase Hosting & Functions
       - name: Deploy to Firebase
