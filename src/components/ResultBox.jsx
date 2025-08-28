@@ -5,7 +5,7 @@ export default function ResultBox({ topic }) {
 
   useEffect(() => {
     const fetchSummary = async () => {
-      const res = await fetch("https://YOUR_PROJECT.cloudfunctions.net/api/summarizeDebate", {
+      const res = await fetch("https://us-central1-clashchatz.cloudfunctions.net/api/summarizeDebate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topicId: topic.id })
