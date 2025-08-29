@@ -11,7 +11,7 @@ app.use(cors({ origin: true }));
 
 // OpenAI key from Firebase env
 const openai = new OpenAI({
-  apiKey: functions.config().openai.key
+  apiKey: process.env.OPENAI_KEY,  // pull directly from GitHub secret
 });
 
 // Summarize debate
