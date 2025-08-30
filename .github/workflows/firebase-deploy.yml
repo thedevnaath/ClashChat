@@ -33,7 +33,7 @@ jobs:
       # 4. Install Firebase functions dependencies (backend)
       - name: Install Firebase Functions dependencies
         run: npm install
-        working-directory: ./functions
+        working-directory: functions
 
       # 5. Install Firebase CLI
       - name: Install Firebase CLI
