@@ -18,7 +18,8 @@ jobs:
       # 1. Checkout code
       - name: Checkout repo
         uses: actions/checkout@v3
-
+        with:
+         path: .
       # 2. Setup Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
