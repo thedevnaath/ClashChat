@@ -10,18 +10,19 @@ import {
 import {
   collection,
   query,
-  where,
   onSnapshot,
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import "./index.css";
+import ChatRoom from "./components/ChatRoom";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [topics, setTopics] = useState([]);
   const [showCreateBox, setShowCreateBox] = useState(false);
   const [newTopic, setNewTopic] = useState("");
+  const [activeTopic, setActiveTopic] = useState(null);
 
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence);
@@ -69,6 +70,16 @@ export default function App() {
       </div>
     );
 
+  // If a topic is active, show ChatRoom
+  if (activeTopic)
+    return (
+      <ChatRoom
+        topic={activeTopic}
+        user={user}
+        goBack={() => setActiveTopic(null)}
+      />
+    );
+
   return (
     <div className="app">
       {/* Header */}
@@ -85,7 +96,11 @@ export default function App() {
       {/* Topics */}
       <div className="topics-container">
         {topics.map((topic) => (
-          <div key={topic.id} className="topic-box">
+          <div
+            key={topic.id}
+            className="topic-box"
+            onClick={() => setActiveTopic(topic)}
+          >
             <h3>{topic.topicText}</h3>
             <p>by {topic.createdBy}</p>
           </div>
@@ -121,4 +136,4 @@ export default function App() {
       </nav>
     </div>
   );
-      }
+          }
