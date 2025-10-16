@@ -11,7 +11,7 @@ export default function App() {
   const [topic, setTopic] = useState(null);
   const [newTopic, setNewTopic] = useState("");
 
-  import { signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 useEffect(() => {
   // Keep user logged in even after refresh
