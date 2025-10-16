@@ -1,3 +1,4 @@
+/* -------- Global Styles -------- */
 body {
   background: #f2f3f5;
   font-family: "Segoe UI", sans-serif;
@@ -18,6 +19,7 @@ body {
   margin-bottom: 20px;
 }
 
+/* -------- Login Page -------- */
 .login-page {
   height: 100vh;
   display: flex;
@@ -41,6 +43,7 @@ body {
   background: #004ed6;
 }
 
+/* -------- Topic Creation -------- */
 .create-topic {
   display: flex;
   justify-content: center;
@@ -62,12 +65,14 @@ body {
   padding: 10px 16px;
   border-radius: 6px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .create-topic button:hover {
   background: #218838;
 }
 
+/* -------- Main Section -------- */
 .main-section {
   max-width: 700px;
   margin: 0 auto;
@@ -79,4 +84,5 @@ body {
 .no-topic {
   color: #777;
   margin-top: 40px;
+  font-size: 1.1rem;
 }
