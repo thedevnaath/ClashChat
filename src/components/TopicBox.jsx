@@ -34,3 +34,4 @@ export default function TopicBox({ topic, user }) {
     </div>
   );
 }
+
