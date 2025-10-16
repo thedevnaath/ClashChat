@@ -1,30 +1,42 @@
 import React, { useState, useEffect } from "react";
 import { auth, provider, db } from "./firebase";
-import { signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { collection, query, where, onSnapshot, addDoc } from "firebase/firestore";
-import TopicBox from "./components/TopicBox";
-import ChatRoom from "./components/ChatRoom";
-import ResultBox from "./components/ResultBox";
+import {
+  signInWithPopup,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+  signOut,
+} from "firebase/auth";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import "./index.css";
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [topic, setTopic] = useState(null);
+  const [topics, setTopics] = useState([]);
+  const [showCreateBox, setShowCreateBox] = useState(false);
   const [newTopic, setNewTopic] = useState("");
 
-  // Keep user logged in
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence);
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => setUser(currentUser));
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
     return () => unsubscribe();
   }, []);
 
-  // Listen for active topic
   useEffect(() => {
-    const q = query(collection(db, "topics"), where("status", "==", "active"));
+    const q = query(collection(db, "topics"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) setTopic({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
-      else setTopic(null);
+      setTopics(
+        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      );
     });
     return () => unsubscribe();
   }, []);
@@ -34,50 +46,79 @@ export default function App() {
     setUser(result.user);
   };
 
-  const createTopic = async () => {
-    if (!newTopic.trim()) return alert("Enter a topic");
-    await addDoc(collection(db, "topics"), {
-      topicText: newTopic,
-      status: "active",
-      createdAt: new Date(),
-      createdBy: user.uid,
-    });
-    setNewTopic("");
+  const logOut = () => {
+    signOut(auth);
   };
 
-  if (!user) {
+  const createTopic = async () => {
+    if (!newTopic.trim()) return alert("Enter a topic text");
+    await addDoc(collection(db, "topics"), {
+      topicText: newTopic,
+      createdBy: user.displayName,
+      createdAt: serverTimestamp(),
+    });
+    setNewTopic("");
+    setShowCreateBox(false);
+  };
+
+  if (!user)
     return (
-      <div className="login-page">
-        <button className="login-btn" onClick={signIn}>
-          Sign in with Google
-        </button>
+      <div className="login-screen">
+        <h1>ClashChat⚡</h1>
+        <button onClick={signIn}>Sign in with Google</button>
       </div>
     );
-  }
 
   return (
     <div className="app">
-      <h1 className="title">ClashChat ⚡</h1>
+      {/* Header */}
+      <header className="header">
+        <h2>ClashChat⚡</h2>
+        <div className="user-info">
+          <span>{user.displayName}</span>
+          <button className="logout-btn" onClick={logOut}>
+            ⎋
+          </button>
+        </div>
+      </header>
 
-      <div className="create-topic">
-        <input
-          type="text"
-          placeholder="Enter a new debate topic..."
-          value={newTopic}
-          onChange={(e) => setNewTopic(e.target.value)}
-        />
-        <button onClick={createTopic}>Create</button>
+      {/* Topics */}
+      <div className="topics-container">
+        {topics.map((topic) => (
+          <div key={topic.id} className="topic-box">
+            <h3>{topic.topicText}</h3>
+            <p>by {topic.createdBy}</p>
+          </div>
+        ))}
       </div>
 
-      {topic ? (
-        <div className="main-section">
-          <TopicBox topic={topic} user={user} />
-          <ChatRoom topic={topic} user={user} />
-          <ResultBox topic={topic} />
+      {/* Floating Add Button */}
+      <button
+        className="floating-btn"
+        onClick={() => setShowCreateBox(!showCreateBox)}
+      >
+        +
+      </button>
+
+      {/* Create Topic Box */}
+      {showCreateBox && (
+        <div className="create-topic-box">
+          <input
+            type="text"
+            placeholder="Enter a new topic..."
+            value={newTopic}
+            onChange={(e) => setNewTopic(e.target.value)}
+          />
+          <button onClick={createTopic}>Create</button>
         </div>
-      ) : (
-        <p className="no-topic">No active topic. Create one above 👆</p>
       )}
+
+      {/* Bottom Navigation */}
+      <nav className="bottom-nav">
+        <button>🏠</button>
+        <button onClick={() => setShowCreateBox(true)}>➕</button>
+        <button>👤</button>
+      </nav>
     </div>
   );
-}
+      }
