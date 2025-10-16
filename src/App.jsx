@@ -11,10 +11,19 @@ export default function App() {
   const [topic, setTopic] = useState(null);
   const [newTopic, setNewTopic] = useState("");
 
-  const signIn = async () => {
-    const result = await signInWithPopup(auth, provider);
-    setUser(result.user);
-  };
+  import { signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth";
+
+useEffect(() => {
+  // Keep user logged in even after refresh
+  setPersistence(auth, browserLocalPersistence);
+  
+  // Check login state continuously
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
+  });
+  
+  return () => unsubscribe();
+}, []);
 
   // 🔹 Listen for active topic
   useEffect(() => {
