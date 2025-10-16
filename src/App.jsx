@@ -5,6 +5,7 @@ import { collection, query, where, onSnapshot, addDoc } from "firebase/firestore
 import TopicBox from "./components/TopicBox";
 import ChatRoom from "./components/ChatRoom";
 import ResultBox from "./components/ResultBox";
+import "./App.css";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -46,11 +47,8 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <button
-          onClick={signIn}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition"
-        >
+      <div className="login-page">
+        <button className="login-btn" onClick={signIn}>
           Sign in with Google
         </button>
       </div>
@@ -58,35 +56,27 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">ClashChat ⚡</h1>
+    <div className="app">
+      <h1 className="title">ClashChat ⚡</h1>
 
-      {/* Create Topic */}
-      <div className="max-w-xl mx-auto mb-6 flex gap-2">
+      <div className="create-topic">
         <input
           type="text"
           placeholder="Enter a new debate topic..."
           value={newTopic}
           onChange={(e) => setNewTopic(e.target.value)}
-          className="flex-1 px-4 py-2 border rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-        <button
-          onClick={createTopic}
-          className="px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
-        >
-          Create
-        </button>
+        <button onClick={createTopic}>Create</button>
       </div>
 
-      {/* Active Topic */}
       {topic ? (
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="main-section">
           <TopicBox topic={topic} user={user} />
           <ChatRoom topic={topic} user={user} />
           <ResultBox topic={topic} />
         </div>
       ) : (
-        <p className="text-center text-gray-500 mt-10">No active topic. Create one above 👆</p>
+        <p className="no-topic">No active topic. Create one above 👆</p>
       )}
     </div>
   );
