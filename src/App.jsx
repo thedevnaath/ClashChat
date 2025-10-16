@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, addDoc } from "firebase/firestore
 import TopicBox from "./components/TopicBox";
 import ChatRoom from "./components/ChatRoom";
 import ResultBox from "./components/ResultBox";
-import "./App.css";
+import "./index.css";
 
 export default function App() {
   const [user, setUser] = useState(null);
