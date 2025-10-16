@@ -1,15 +1,82 @@
-/* src/index.css */
-
 body {
+  background: #f2f3f5;
+  font-family: "Segoe UI", sans-serif;
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
+  padding: 0;
+  color: #222;
 }
 
-#root {
+.app {
+  text-align: center;
+  padding: 30px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.login-page {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eaeaea;
+}
+
+.login-btn {
+  background: #0066ff;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.login-btn:hover {
+  background: #004ed6;
+}
+
+.create-topic {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  gap: 10px;
+  margin-bottom: 25px;
 }
 
+.create-topic input {
+  width: 300px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.create-topic button {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.create-topic button:hover {
+  background: #218838;
+}
+
+.main-section {
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.no-topic {
+  color: #777;
+  margin-top: 40px;
+}
