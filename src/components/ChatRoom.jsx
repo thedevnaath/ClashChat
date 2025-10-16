@@ -40,3 +40,4 @@ export default function ChatRoom({ topic, user }) {
     </div>
   );
 }
+
