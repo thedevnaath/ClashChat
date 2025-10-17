@@ -22,3 +22,4 @@ export default function Feed({ user, openChat }) {
     </div>
   );
 }
+
