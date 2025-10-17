@@ -14,12 +14,14 @@ jobs:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
       OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+
     steps:
       # 1. Checkout code
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-         path: .
+          path: .
+
       # 2. Setup Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -28,8 +30,10 @@ jobs:
 
       # 3. Install React dependencies (frontend)
       - name: Install React dependencies
-        run: npm install
-        working-directory: .
+        run: |
+          npm install
+          npm install react-router-dom
+        working-directory: ./
 
       # 4. Install Firebase functions dependencies (backend)
       - name: Install Firebase Functions dependencies
