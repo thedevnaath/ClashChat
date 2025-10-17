@@ -1,26 +1,38 @@
 import React, { useState } from "react";
 import { db } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
-export default function AddTopic({ user, goBack }) {
-  const [text, setText] = useState("");
+export default function AddTopic({ user }) {
+  const [topicText, setTopicText] = useState("");
+  const navigate = useNavigate();
 
-  const createTopic = async () => {
-    if (!text.trim()) return alert("Enter topic text");
+  const handleAddTopic = async () => {
+    if (!topicText.trim()) return alert("Please enter a topic!");
+
     await addDoc(collection(db, "topics"), {
-      topicText: text,
+      topicText,
       createdAt: serverTimestamp(),
-      createdBy: user.uid
+      createdBy: user.uid,
+      createdByName: user.displayName,
+      status: "active",
     });
-    setText("");
-    goBack();
+
+    setTopicText("");
+    navigate("/"); // go back to home after creating topic
   };
 
   return (
     <div className="add-topic">
-      <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Enter topic" />
-      <button onClick={createTopic}>Add Topic</button>
-      <button onClick={goBack}>Cancel</button>
+      <h2>Create a New Debate</h2>
+      <input
+        type="text"
+        placeholder="Enter your debate topic..."
+        value={topicText}
+        onChange={(e) => setTopicText(e.target.value)}
+      />
+      <button onClick={handleAddTopic}>Create Topic</button>
+      <button onClick={() => navigate("/")}>Cancel</button>
     </div>
   );
 }
