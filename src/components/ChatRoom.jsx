@@ -1,55 +1,67 @@
-import React, { useState, useEffect } from "react";
+// src/components/ChatRoom.jsx
+import React, { useEffect, useRef, useState } from "react";
 import { db } from "../firebase";
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
-export default function ChatRoom({ topic, user, goBack }) {
+export default function ChatRoom({ topic, user, goBack }){
   const [messages, setMessages] = useState([]);
+  const [voteSide, setVoteSide] = useState(null);
   const [newMsg, setNewMsg] = useState("");
-  const [userVote, setUserVote] = useState("");
+  const scrollRef = useRef();
 
-  useEffect(() => {
-    // Get user vote
-    const unsubscribeVote = onSnapshot(doc(db, "votes", `${topic.id}_${user.uid}`), docSnap => {
-      if (docSnap.exists()) setUserVote(docSnap.data().voteSide);
+  useEffect(()=>{
+    // read user's vote (if any)
+    const vDocRef = doc(db, "votes", `${topic.id}_${user.uid}`);
+    getDoc(vDocRef).then(snap=>{
+      if(snap.exists()){
+        setVoteSide(snap.data().voteSide);
+      }
     });
 
-    // Get messages
-    const q = query(collection(db, "messages"), where("topicId", "==", topic.id), orderBy("timestamp"));
-    const unsubscribeMsg = onSnapshot(q, snapshot => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const q = query(collection(db, "messages"), where("topicId","==",topic.id), orderBy("timestamp"));
+    const unsub = onSnapshot(q, snap=>{
+      setMessages(snap.docs.map(d=>({id:d.id,...d.data()})));
+      // scroll to bottom
+      setTimeout(()=> scrollRef.current?.scrollIntoView({behavior:"smooth"}), 50);
     });
-
-    return () => {
-      unsubscribeVote();
-      unsubscribeMsg();
-    };
-  }, [topic, user]);
+    return ()=> unsub();
+  },[topic,user]);
 
   const sendMessage = async () => {
-    if (!newMsg.trim()) return;
+    if(!newMsg.trim()) return;
+    if(!voteSide) return alert("Pick a side (Agree/Disagree) from the topic first.");
     await addDoc(collection(db, "messages"), {
       topicId: topic.id,
       userId: user.uid,
-      voteSide: userVote,
-      messageText: newMsg,
+      userName: user.displayName,
+      voteSide,
+      messageText: newMsg.trim(),
       timestamp: serverTimestamp()
     });
     setNewMsg("");
   };
 
   return (
-    <div className="chat-room">
-      <button onClick={goBack}>Back</button>
-      <h2>{topic.topicText}</h2>
-      <div className="messages">
-        {messages.map(msg => (
-          <div key={msg.id} className={`message ${msg.voteSide === "Agree" ? "agree-bubble" : "disagree-bubble"}`}>
-            {msg.messageText}
+    <div className="chat-screen">
+      <div className="chat-header">
+        <button onClick={goBack} style={{background:"transparent",border:"none",color:"white",cursor:"pointer"}}>←</button>
+        <div style={{flex:1}}><strong>{topic.topicText}</strong><div style={{fontSize:12,color:"var(--muted)"}}>Topic</div></div>
+      </div>
+
+      <div className="chat-body">
+        {messages.map(m=>(
+          <div key={m.id} className={`chat-bubble ${m.voteSide === "Agree" ? "bubble-agree" : "bubble-disagree"}`}>
+            <div className="msg-meta">{m.userName} • {m.timestamp ? new Date(m.timestamp.seconds*1000).toLocaleString() : ""}</div>
+            <div>{m.messageText}</div>
           </div>
         ))}
+        <div ref={scrollRef}></div>
       </div>
-      <input value={newMsg} onChange={(e) => setNewMsg(e.target.value)} placeholder="Type message..." />
-      <button onClick={sendMessage}>Send</button>
+
+      <div className="chat-input-area">
+        <input value={newMsg} onChange={e=>setNewMsg(e.target.value)} placeholder="Type your message..." maxLength={1000} />
+        <button onClick={sendMessage}>Send</button>
+      </div>
     </div>
   );
 }
