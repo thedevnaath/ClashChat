@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from "react";
+// src/components/Feed.jsx
+import React from "react";
 import { db } from "../firebase";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import TopicBox from "./TopicBox";
 
-export default function Feed({ user, openChat }) {
-  const [topics, setTopics] = useState([]);
-
-  useEffect(() => {
-    const q = query(collection(db, "topics"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, snapshot => {
-      setTopics(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+export default function Feed({ user, openChat }){
+  // Live list is provided by App (listener). To avoid duplicate listeners keep the simple pattern:
+  // App passes topics via Firestore snapshot — but for simplicity, feed fetches its own snapshot:
+  const [topics, setTopics] = React.useState([]);
+  React.useEffect(()=>{
+    const { collection, query, orderBy, onSnapshot } = require("firebase/firestore");
+    const q = query(collection(db, "topics"), orderBy("createdAt","desc"));
+    const unsub = onSnapshot(q, snap=>{
+      setTopics(snap.docs.map(d=>({id:d.id,...d.data()})));
     });
-    return () => unsubscribe();
-  }, []);
+    return ()=>unsub();
+  },[]);
 
   return (
-    <div className="feed">
-      {topics.map(topic => (
-        <TopicBox key={topic.id} topic={topic} user={user} openChat={openChat} />
-      ))}
+    <div>
+      {topics.map(t => <TopicBox key={t.id} topic={t} user={user} openChat={openChat} />)}
+      {topics.length === 0 && <div style={{padding:20,color:"var(--muted)"}}>No topics yet — be the first to add one!</div>}
     </div>
   );
 }
-
