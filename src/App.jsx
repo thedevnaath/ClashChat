@@ -12,6 +12,19 @@ import BottomNav from "./components/BottomNav";
 import Leaderboard from "./components/LeaderBoard";
 import ResultBox from "./components/ResultBox";
 
+// 🔍 Debug catcher (shows JS errors on screen)
+const [debugError, setDebugError] = React.useState("");
+
+window.addEventListener("error", (event) => {
+  const msg = event?.error?.message || event.message;
+  setDebugError(msg);
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const msg = event?.reason?.message || event.reason;
+  setDebugError(msg);
+});
+
 export default function App(){
   const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("feed"); // 'feed' | 'add' | 'chat' | 'leaderboard'
@@ -51,6 +64,20 @@ export default function App(){
 
   return (
     <div className="app-container">
+      {debugError && (
+  <div style={{
+    background:"red",
+    color:"white",
+    padding:"10px",
+    borderRadius:"8px",
+    margin:"10px",
+    fontSize:"14px",
+    zIndex:9999
+  }}>
+    ⚠️ <b>JS Error:</b> {debugError}
+  </div>
+)}
+
       <div className="header">
         <div className="brand">
           <div className="logo">⚡</div>
