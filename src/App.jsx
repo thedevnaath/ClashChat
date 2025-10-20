@@ -9,7 +9,7 @@ import Feed from "./components/Feed";
 import AddTopic from "./components/AddTopic";
 import ChatRoom from "./components/ChatRoom";
 import BottomNav from "./components/BottomNav";
-import Leaderboard from "./components/Leaderboard";
+import Leaderboard from "./components/LeaderBoard";
 import ResultBox from "./components/ResultBox";
 
 export default function App(){
