@@ -65,3 +65,4 @@ export default function ChatRoom({ topic, user, goBack }){
     </div>
   );
 }
+
