@@ -44,6 +44,10 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      # 5.1. Deploy only functions (no need to rebuild frontend)
+      - name: Deploy Cloud Function
+        run: firebase deploy --only functions --project $PROJECT_ID
+        
       # 6. Authenticate Firebase
       - name: Authenticate Firebase with Service Account
         run: echo "$GCP_SA_KEY" > "$GOOGLE_APPLICATION_CREDENTIALS"
