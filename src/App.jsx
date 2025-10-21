@@ -12,52 +12,64 @@ import BottomNav from "./components/BottomNav";
 import Leaderboard from "./components/LeaderBoard";
 import ResultBox from "./components/ResultBox";
 
-// 🔍 Debug catcher (shows JS errors on screen)
-const [debugError, setDebugError] = React.useState("");
-
-window.addEventListener("error", (event) => {
-  const msg = event?.error?.message || event.message;
-  setDebugError(msg);
-});
-
-window.addEventListener("unhandledrejection", (event) => {
-  const msg = event?.reason?.message || event.reason;
-  setDebugError(msg);
-});
-
-export default function App(){
+export default function App() {
   const [user, setUser] = useState(null);
   const [screen, setScreen] = useState("feed"); // 'feed' | 'add' | 'chat' | 'leaderboard'
   const [activeTopic, setActiveTopic] = useState(null);
   const [liveTopics, setLiveTopics] = useState([]);
+  const [debugError, setDebugError] = useState(""); // ✅ moved inside component
 
-  useEffect(()=>{
+  // 🔍 Catch any JS runtime error and show it onscreen
+  useEffect(() => {
+    const handleError = (event) => {
+      const msg = event?.error?.message || event.message;
+      setDebugError(msg);
+    };
+    const handleRejection = (event) => {
+      const msg = event?.reason?.message || event.reason;
+      setDebugError(msg);
+    };
+
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => {
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleRejection);
+    };
+  }, []);
+
+  useEffect(() => {
     setPersistence(auth, browserLocalPersistence);
-    const unsub = onAuthStateChanged(auth, (u)=> setUser(u));
-    return ()=>unsub();
-  },[]);
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => unsub();
+  }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     const q = query(collection(db, "topics"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, snap => {
-      setLiveTopics(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const unsub = onSnapshot(q, (snap) => {
+      setLiveTopics(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
-    return ()=>unsub();
-  },[]);
+    return () => unsub();
+  }, []);
 
-  const signIn = async ()=> {
+  const signIn = async () => {
     await signInWithPopup(auth, provider);
   };
 
-  const logout = async ()=> {
+  const logout = async () => {
     await signOut(auth);
   };
 
-  if(!user){
+  if (!user) {
     return (
-      <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
-        <h1 style={{color:"white",marginBottom:20}}>ClashChat⚡</h1>
-        <button onClick={signIn} style={{padding:"12px 20px",borderRadius:10,border:"none",background:"#7c3aed",color:"#fff",cursor:"pointer"}}>Sign in with Google</button>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+        <h1 style={{ color: "white", marginBottom: 20 }}>ClashChat⚡</h1>
+        <button
+          onClick={signIn}
+          style={{ padding: "12px 20px", borderRadius: 10, border: "none", background: "#7c3aed", color: "#fff", cursor: "pointer" }}
+        >
+          Sign in with Google
+        </button>
       </div>
     );
   }
@@ -65,18 +77,20 @@ export default function App(){
   return (
     <div className="app-container">
       {debugError && (
-  <div style={{
-    background:"red",
-    color:"white",
-    padding:"10px",
-    borderRadius:"8px",
-    margin:"10px",
-    fontSize:"14px",
-    zIndex:9999
-  }}>
-    ⚠️ <b>JS Error:</b> {debugError}
-  </div>
-)}
+        <div
+          style={{
+            background: "red",
+            color: "white",
+            padding: "10px",
+            borderRadius: "8px",
+            margin: "10px",
+            fontSize: "14px",
+            zIndex: 9999,
+          }}
+        >
+          ⚠️ <b>JS Error:</b> {debugError}
+        </div>
+      )}
 
       <div className="header">
         <div className="brand">
@@ -86,34 +100,63 @@ export default function App(){
         <div className="user-block">
           <img src={user.photoURL} alt="avatar" />
           <div className="name">{user.displayName}</div>
-          <button onClick={logout} style={{marginLeft:10, background:"transparent", border:"1px solid rgba(255,255,255,0.04)", color:"white", padding:"6px 8px", borderRadius:8, cursor:"pointer"}}>Log out</button>
+          <button
+            onClick={logout}
+            style={{
+              marginLeft: 10,
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.04)",
+              color: "white",
+              padding: "6px 8px",
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
+            Log out
+          </button>
         </div>
       </div>
 
       <div className="main">
-        {screen === "feed" && <div className="feed-col"><Feed user={user} openChat={(topic)=>{ setActiveTopic(topic); setScreen("chat"); }} /></div>}
-        {screen === "add" && <div className="feed-col"><AddTopic user={user} goBack={()=> setScreen("feed")} /></div>}
-        {screen === "chat" && activeTopic && <div className="feed-col"><ChatRoom topic={activeTopic} user={user} goBack={()=> setScreen("feed")} /></div>}
-        {screen === "leaderboard" && <div className="feed-col"><Leaderboard /></div>}
+        {screen === "feed" && (
+          <div className="feed-col">
+            <Feed user={user} openChat={(topic) => { setActiveTopic(topic); setScreen("chat"); }} />
+          </div>
+        )}
+        {screen === "add" && (
+          <div className="feed-col">
+            <AddTopic user={user} goBack={() => setScreen("feed")} />
+          </div>
+        )}
+        {screen === "chat" && activeTopic && (
+          <div className="feed-col">
+            <ChatRoom topic={activeTopic} user={user} goBack={() => setScreen("feed")} />
+          </div>
+        )}
+        {screen === "leaderboard" && (
+          <div className="feed-col">
+            <Leaderboard />
+          </div>
+        )}
         <div className="side-col">
           <div className="panel">
-            <h3 style={{marginTop:0}}>Latest Topic Result</h3>
+            <h3 style={{ marginTop: 0 }}>Latest Topic Result</h3>
             <ResultBox />
           </div>
           <div className="panel">
-            <h3 style={{marginTop:0}}>Leaderboard</h3>
+            <h3 style={{ marginTop: 0 }}>Leaderboard</h3>
             <Leaderboard />
           </div>
         </div>
       </div>
 
-      <button className="fab" onClick={()=> setScreen("add")}>+</button>
+      <button className="fab" onClick={() => setScreen("add")}>+</button>
 
       <div className="bottom-nav">
-        <button onClick={()=> setScreen("feed")}>🏠</button>
-        <button onClick={()=> setScreen("add")}>➕</button>
-        <button onClick={()=> setScreen("leaderboard")}>🏆</button>
+        <button onClick={() => setScreen("feed")}>🏠</button>
+        <button onClick={() => setScreen("add")}>➕</button>
+        <button onClick={() => setScreen("leaderboard")}>🏆</button>
       </div>
     </div>
   );
-}
+            }
