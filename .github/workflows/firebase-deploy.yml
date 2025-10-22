@@ -55,4 +55,3 @@ jobs:
           firebase deploy --only hosting,functions --project $PROJECT_ID --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
-
