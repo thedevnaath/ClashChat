@@ -15,7 +15,7 @@ export default function TopicBox({ topic, user, openChat }) {
 
       // 2️⃣ Trigger Cloud Function to summarize
       const response = await fetch(
-        `https://us-central1-${process.env.REACT_APP_FIREBASE_PROJECT_ID}.cloudfunctions.net/api/summarizeDebate`,
+        `https://us-central1-clashchatz.cloudfunctions.net/api/summarizeDebate`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
