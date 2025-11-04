@@ -94,3 +94,4 @@ export default function TopicBox({ topic, user, openChat }) {
     </div>
   );
 }
+
