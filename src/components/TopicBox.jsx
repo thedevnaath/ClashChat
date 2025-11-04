@@ -1,4 +1,3 @@
-// src/components/TopicBox.jsx
 import React from "react";
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
@@ -6,24 +5,7 @@ import { doc, updateDoc } from "firebase/firestore";
 export default function TopicBox({ topic, user, openChat }) {
   const isCreator = user && topic.createdBy === user.uid;
 
-  // 🟢 User selects a side (agree/disagree)
-  const handleSelectSide = async (e, side) => {
-    e.stopPropagation(); // stop parent click
-    try {
-      // Store user's selected side in Firestore under topic’s "votes" subcollection
-      await updateDoc(doc(db, "users", user.uid), { lastVote: side });
-
-      // Open chat with that side
-      openChat({ ...topic, userVote: side });
-    } catch (err) {
-      console.error("Vote side error:", err);
-      alert("Error selecting side.");
-    }
-  };
-
-  // 🔴 End topic and summarize
-  const endTopic = async (e) => {
-    e.stopPropagation();
+  const endTopic = async () => {
     if (!window.confirm("End this topic? Once ended, no one can chat further.")) return;
     try {
       await updateDoc(doc(db, "topics", topic.id), { status: "ended" });
@@ -56,19 +38,18 @@ export default function TopicBox({ topic, user, openChat }) {
         border: "1px solid var(--border)",
         borderRadius: 12,
         padding: 12,
-        marginBottom: 10,
+        marginBottom: 12,
         background:
           topic.status === "ended"
             ? "linear-gradient(90deg,#2c2c2c,#1c1c1c)"
             : "linear-gradient(90deg,var(--accent-a),var(--accent-b))",
         color: "white",
         transition: "0.2s",
-        cursor: topic.status === "ended" ? "default" : "pointer",
+        userSelect: "none",
       }}
-      onClick={() => openChat(topic)} // fallback if user clicks the background
     >
-      {/* 🟦 Header */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      {/* Header section */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <b>{topic.topicText}</b>
           <div style={{ fontSize: 12, opacity: 0.8 }}>
@@ -87,7 +68,10 @@ export default function TopicBox({ topic, user, openChat }) {
           </div>
           {isCreator && topic.status !== "ended" && (
             <button
-              onClick={endTopic}
+              onClick={(e) => {
+                e.stopPropagation();
+                endTopic();
+              }}
               style={{
                 marginTop: 5,
                 padding: "4px 8px",
@@ -105,66 +89,47 @@ export default function TopicBox({ topic, user, openChat }) {
         </div>
       </div>
 
-      {/* 🟩 Voting Buttons */}
+      {/* Buttons section */}
       {topic.status !== "ended" && (
-        <div
-          style={{
-            marginTop: 10,
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
+        <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
           <button
-            onClick={(e) => handleSelectSide(e, "agree")}
+            onClick={(e) => {
+              e.stopPropagation();
+              openChat(topic, "agree");
+            }}
             style={{
               flex: 1,
-              padding: "6px 8px",
-              fontSize: 13,
-              background: "#2196F3",
+              background: "#2196f3",
               border: "none",
               borderRadius: 8,
+              padding: "8px 0",
               color: "white",
-              cursor: "pointer",
               fontWeight: "bold",
+              cursor: "pointer",
             }}
           >
             👍 Agree
           </button>
-
           <button
-            onClick={(e) => handleSelectSide(e, "disagree")}
+            onClick={(e) => {
+              e.stopPropagation();
+              openChat(topic, "disagree");
+            }}
             style={{
               flex: 1,
-              padding: "6px 8px",
-              fontSize: 13,
-              background: "#E91E63",
+              background: "#e91e63",
               border: "none",
               borderRadius: 8,
+              padding: "8px 0",
               color: "white",
-              cursor: "pointer",
               fontWeight: "bold",
+              cursor: "pointer",
             }}
           >
             👎 Disagree
           </button>
         </div>
       )}
-
-      {/* 🟦 Summary Display */}
-      {topic.summary && (
-        <div
-          style={{
-            marginTop: 10,
-            padding: 10,
-            borderRadius: 8,
-            background: "rgba(0,0,0,0.4)",
-          }}
-        >
-          <strong>Summary:</strong>
-          <p style={{ marginTop: 5 }}>{topic.summary}</p>
-        </div>
-      )}
     </div>
   );
-              }
+}
