@@ -1,12 +1,27 @@
 // src/components/TopicBox.jsx
 import React from "react";
 import { db } from "../firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
 export default function TopicBox({ topic, user, openChat }) {
   const isCreator = user && topic.createdBy === user.uid;
 
-  const endTopic = async () => {
+  // 🟢 Handle voting
+  const handleVote = async (e, type) => {
+    e.stopPropagation();
+    try {
+      const topicRef = doc(db, "topics", topic.id);
+      const field = type === "agree" ? "agreeCount" : "disagreeCount";
+      await updateDoc(topicRef, { [field]: increment(1) });
+    } catch (err) {
+      console.error("Vote error:", err);
+      alert("Error submitting vote.");
+    }
+  };
+
+  // 🔴 End topic and trigger summary
+  const endTopic = async (e) => {
+    e.stopPropagation();
     if (!window.confirm("End this topic? Once ended, no one can chat further.")) return;
     try {
       // 1️⃣ Update Firestore
@@ -69,29 +84,83 @@ export default function TopicBox({ topic, user, openChat }) {
           >
             {topic.status === "ended" ? "Ended" : "Active"}
           </div>
-          {isCreator && topic.status !== "ended" && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                endTopic();
-              }}
-              style={{
-                marginTop: 5,
-                padding: "4px 8px",
-                fontSize: 12,
-                background: "#ff4d4d",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer",
-                color: "white",
-              }}
-            >
-              End
-            </button>
-          )}
         </div>
       </div>
+
+      {/* 🟩 Buttons Section */}
+      <div
+        style={{
+          marginTop: 10,
+          display: "flex",
+          justifyContent: "flex-start",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          onClick={(e) => handleVote(e, "agree")}
+          disabled={topic.status === "ended"}
+          style={{
+            padding: "4px 8px",
+            fontSize: 12,
+            background: "#00c853",
+            border: "none",
+            borderRadius: 6,
+            cursor: topic.status === "ended" ? "not-allowed" : "pointer",
+            color: "white",
+          }}
+        >
+          👍 Agree ({topic.agreeCount || 0})
+        </button>
+
+        <button
+          onClick={(e) => handleVote(e, "disagree")}
+          disabled={topic.status === "ended"}
+          style={{
+            padding: "4px 8px",
+            fontSize: 12,
+            background: "#ff3d00",
+            border: "none",
+            borderRadius: 6,
+            cursor: topic.status === "ended" ? "not-allowed" : "pointer",
+            color: "white",
+          }}
+        >
+          👎 Disagree ({topic.disagreeCount || 0})
+        </button>
+
+        {isCreator && topic.status !== "ended" && (
+          <button
+            onClick={endTopic}
+            style={{
+              padding: "4px 8px",
+              fontSize: 12,
+              background: "#ff1744",
+              border: "none",
+              borderRadius: 6,
+              cursor: "pointer",
+              color: "white",
+            }}
+          >
+            🔚 End Topic
+          </button>
+        )}
+      </div>
+
+      {/* 🟦 Summary Section */}
+      {topic.summary && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: 10,
+            borderRadius: 8,
+            background: "rgba(0,0,0,0.4)",
+          }}
+        >
+          <strong>Summary:</strong>
+          <p style={{ marginTop: 5 }}>{topic.summary}</p>
+        </div>
+      )}
     </div>
   );
-}
-
+        }
