@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { db } from "../firebase";
 import {
   collection,
@@ -7,269 +7,195 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
-  updateDoc,
-  doc,
+  where,
 } from "firebase/firestore";
 
-export default function ChatRoom({ topic, user, closeChat }) {
+export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [side, setSide] = useState(null); // "agree" | "disagree"
+  const [side] = useState(chosenSide);
   const messagesEndRef = useRef(null);
 
-  // Load chat messages
+  // 🔄 Fetch messages live
   useEffect(() => {
-    if (!topic?.id) return;
     const q = query(
-      collection(db, "topics", topic.id, "messages"),
+      collection(db, "messages"),
+      where("topicId", "==", topic.id),
       orderBy("timestamp", "asc")
     );
-    const unsub = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
-    return () => unsub();
+    return unsubscribe;
   }, [topic.id]);
 
-  // Scroll to bottom when new message
+  // ⬇️ Auto scroll to latest
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle message send
+  // ✉️ Send message
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-    try {
-      await addDoc(collection(db, "topics", topic.id, "messages"), {
-        text: input,
-        uid: user.uid,
-        userName: user.displayName || "Anonymous",
-        timestamp: serverTimestamp(),
-        side,
-      });
-      setInput("");
-    } catch (err) {
-      console.error("Error sending message:", err);
-    }
+
+    await addDoc(collection(db, "messages"), {
+      text: input,
+      userId: user.uid,
+      userName: user.displayName || "Anonymous",
+      topicId: topic.id,
+      timestamp: serverTimestamp(),
+      side,
+    });
+
+    setInput("");
   };
 
-  // Handle topic end
-  const endTopic = async () => {
-    if (!window.confirm("End this topic? Once ended, no one can chat further.")) return;
-    try {
-      await updateDoc(doc(db, "topics", topic.id), { status: "ended" });
-      alert("Topic ended successfully! Generating summary...");
-
-      // Trigger ChatGPT summarize function
-      const response = await fetch(
-        `https://us-central1-clashchatz.cloudfunctions.net/api/summarizeDebate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topicId: topic.id }),
-        }
-      );
-
-      if (!response.ok) throw new Error(await response.text());
-      const data = await response.json();
-
-      alert("✅ Summary generated successfully!");
-      console.log("Summary:", data.summary);
-    } catch (err) {
-      console.error(err);
-      alert("Error ending topic or generating summary.");
-    }
+  const getBubbleColor = (msgSide) => {
+    if (msgSide === "agree") return "rgba(33,150,243,0.25)"; // blue tint
+    if (msgSide === "disagree") return "rgba(233,30,99,0.25)"; // pink tint
+    return "#333";
   };
-
-  // Choose side
-  if (!side) {
-    return (
-      <div
-        style={{
-          background: "#111",
-          color: "white",
-          height: "100vh",
-          padding: 20,
-          textAlign: "center",
-        }}
-      >
-        <h2>{topic.topicText}</h2>
-        <p>Choose your side to enter the debate:</p>
-        <div style={{ marginTop: 30 }}>
-          <button
-            onClick={() => setSide("agree")}
-            style={{
-              background: "#2196f3",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              padding: "10px 20px",
-              fontSize: 16,
-              marginRight: 10,
-              cursor: "pointer",
-            }}
-          >
-            👍 Agree
-          </button>
-          <button
-            onClick={() => setSide("disagree")}
-            style={{
-              background: "#e91e63",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              padding: "10px 20px",
-              fontSize: 16,
-              cursor: "pointer",
-            }}
-          >
-            👎 Disagree
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
       style={{
-        background: "#0d0d0d",
-        color: "white",
+        width: "100%",
         height: "100vh",
+        background: "#121212",
+        color: "white",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* Header */}
+      {/* 🔹 Header */}
       <div
         style={{
-          padding: 12,
-          borderBottom: "1px solid #333",
-          background: "black",
+          padding: "12px 16px",
+          background:
+            side === "agree"
+              ? "linear-gradient(90deg,#1565c0,#1e88e5)"
+              : "linear-gradient(90deg,#ad1457,#d81b60)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
         }}
       >
         <div>
-          <h3>{topic.topicText}</h3>
-          <div style={{ fontSize: 12, opacity: 0.7 }}>
-            {topic.status === "ended" ? "🔴 Debate Ended" : `🟢 You’re on the ${side} side`}
+          <b>{topic.topicText}</b>
+          <div style={{ fontSize: 12, opacity: 0.8 }}>
+            {side === "agree" ? "You chose: Agree 👍" : "You chose: Disagree 👎"}
           </div>
         </div>
-        <div>
-          {topic.createdBy === user.uid && topic.status !== "ended" && (
-            <button
-              onClick={endTopic}
-              style={{
-                background: "#ff4d4d",
-                border: "none",
-                borderRadius: 6,
-                padding: "6px 12px",
-                cursor: "pointer",
-                color: "white",
-              }}
-            >
-              End Topic
-            </button>
-          )}
-          <button
-            onClick={closeChat}
-            style={{
-              marginLeft: 10,
-              background: "#444",
-              border: "none",
-              borderRadius: 6,
-              padding: "6px 12px",
-              cursor: "pointer",
-              color: "white",
-            }}
-          >
-            Exit
-          </button>
-        </div>
+        <button
+          onClick={closeChat}
+          style={{
+            background: "transparent",
+            border: "1px solid white",
+            borderRadius: 6,
+            color: "white",
+            padding: "4px 10px",
+            cursor: "pointer",
+          }}
+        >
+          ⬅ Back
+        </button>
       </div>
 
-      {/* Messages */}
+      {/* 💬 Messages */}
       <div
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: 12,
-          background: "#121212",
+          padding: 16,
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {messages.map((msg) => (
           <div
             key={msg.id}
             style={{
-              background:
-                msg.side === "agree"
-                  ? "rgba(33,150,243,0.15)"
-                  : "rgba(233,30,99,0.15)",
+              alignSelf: msg.userId === user.uid ? "flex-end" : "flex-start",
+              background: getBubbleColor(msg.side),
+              marginBottom: 10,
+              borderRadius: 10,
+              padding: "8px 12px",
+              maxWidth: "75%",
+              wordWrap: "break-word",
               border:
-                msg.side === "agree"
-                  ? "1px solid #2196f3"
-                  : "1px solid #e91e63",
-              color: msg.side === "agree" ? "#90caf9" : "#f48fb1",
-              borderRadius: 8,
-              padding: 8,
-              marginBottom: 6,
-              alignSelf: msg.uid === user.uid ? "flex-end" : "flex-start",
-              maxWidth: "70%",
+                msg.userId === user.uid
+                  ? "1px solid rgba(255,255,255,0.2)"
+                  : "1px solid rgba(255,255,255,0.1)",
             }}
           >
-            <div style={{ fontWeight: "bold", fontSize: 13 }}>
-              {msg.userName}
+            <div style={{ fontSize: 12, opacity: 0.7 }}>
+              {msg.userName} ({msg.side === "agree" ? "👍" : "👎"})
             </div>
-            <div style={{ fontSize: 14 }}>{msg.text}</div>
+            <div>{msg.text}</div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Box */}
-      {topic.status !== "ended" && (
+      {/* ✏️ Input */}
+      {topic.status !== "ended" ? (
         <form
           onSubmit={sendMessage}
           style={{
             display: "flex",
             padding: 10,
             borderTop: "1px solid #333",
-            background: side === "agree" ? "#0d47a1" : "#880e4f",
+            background: "#1e1e1e",
           }}
         >
           <input
             type="text"
-            placeholder="Type your message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            placeholder="Type your message..."
             style={{
               flex: 1,
+              padding: "10px 12px",
+              borderRadius: 8,
               border: "none",
               outline: "none",
-              padding: "10px 12px",
-              borderRadius: 6,
-              background: "#222",
+              background: "#2c2c2c",
               color: "white",
             }}
           />
           <button
             type="submit"
             style={{
-              marginLeft: 8,
-              background: "limegreen",
-              color: "white",
+              marginLeft: 10,
+              background:
+                side === "agree"
+                  ? "linear-gradient(90deg,#1976d2,#42a5f5)"
+                  : "linear-gradient(90deg,#d81b60,#f06292)",
               border: "none",
-              borderRadius: 6,
+              borderRadius: 8,
+              color: "white",
               padding: "10px 16px",
               cursor: "pointer",
+              fontWeight: "bold",
             }}
           >
             Send
           </button>
         </form>
+      ) : (
+        <div
+          style={{
+            textAlign: "center",
+            padding: 16,
+            background: "#1e1e1e",
+            color: "#aaa",
+            fontStyle: "italic",
+          }}
+        >
+          This topic has ended. You can no longer send messages.
+        </div>
       )}
     </div>
   );
-                }
+        }
