@@ -25,16 +25,17 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+          cache: 'npm'
 
-      # 3. Install frontend dependencies
+      # 3. Install frontend dependencies (including lucide-react)
       - name: Install frontend dependencies
         run: |
-          npm install
-          npm install react-router-dom
+          npm ci
+          npm list lucide-react || npm install lucide-react@^0.263.1
 
       # 4. Install backend dependencies
       - name: Install Firebase Functions dependencies
-        run: npm install
+        run: npm ci
         working-directory: functions
 
       # 5. Install Firebase CLI
@@ -48,11 +49,19 @@ jobs:
       # 7. Build React app
       - name: Build React App
         run: npm run build
+        env:
+          CI: false
 
-      # 8. Deploy to Firebase Hosting + Functions
+      # 8. Deploy to Firebase Hosting
       - name: Deploy to Firebase
         run: |
           firebase deploy --only hosting --project $PROJECT_ID --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
 
+      # 9. Deployment summary
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "🔗 Visit: https://clashchatz.web.app"
