@@ -1,12 +1,32 @@
 import React from "react";
 import { db } from "../firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, setDoc } from "firebase/firestore";
+import { ThumbsUp, ThumbsDown, XCircle } from "lucide-react";
 
 export default function TopicBox({ topic, user, openChat }) {
   const isCreator = user && topic.createdBy === user.uid;
 
+  const handleVote = async (side) => {
+    try {
+      // Save user's side choice to Firestore
+      await setDoc(doc(db, "topics", topic.id, "sides", user.uid), {
+        side,
+        userId: user.uid,
+        userName: user.displayName,
+        timestamp: new Date().toISOString()
+      });
+
+      // Open chat with chosen side
+      openChat(topic, side);
+    } catch (err) {
+      console.error("Error saving side:", err);
+      alert("Error joining chat. Please try again.");
+    }
+  };
+
   const endTopic = async () => {
-    if (!window.confirm("End this topic? Once ended, no one can chat further.")) return;
+    if (!window.confirm("End this topic? Once ended, no one can chat further."))
+      return;
     try {
       await updateDoc(doc(db, "topics", topic.id), { status: "ended" });
       alert("Topic ended successfully! Generating summary...");
@@ -33,39 +53,54 @@ export default function TopicBox({ topic, user, openChat }) {
 
   return (
     <div
-      className="topic-box"
       style={{
-        border: "1px solid var(--border)",
+        background: "#ffffff",
+        border: "1px solid #e5e7eb",
         borderRadius: 12,
-        padding: 12,
-        marginBottom: 12,
-        background:
-          topic.status === "ended"
-            ? "linear-gradient(90deg,#2c2c2c,#1c1c1c)"
-            : "linear-gradient(90deg,var(--accent-a),var(--accent-b))",
-        color: "white",
-        transition: "0.2s",
-        userSelect: "none",
+        padding: 20,
+        marginBottom: 16,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        transition: "all 0.2s",
       }}
     >
-      {/* Header section */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <b>{topic.topicText}</b>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>
-            By {topic.createdByName || "Unknown"}
-          </div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <h3
             style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#111827",
+              margin: "0 0 8px 0",
+              lineHeight: '1.4'
+            }}
+          >
+            {topic.topicText}
+          </h3>
+          <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
+            by {topic.createdByName || "Unknown"}
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              padding: "4px 12px",
+              borderRadius: 20,
               fontSize: 12,
-              color: topic.status === "ended" ? "red" : "lime",
-              fontWeight: "bold",
+              fontWeight: 600,
+              background: topic.status === "ended" ? "#fee2e2" : "#d1fae5",
+              color: topic.status === "ended" ? "#991b1b" : "#065f46",
             }}
           >
             {topic.status === "ended" ? "Ended" : "Active"}
-          </div>
+          </span>
           {isCreator && topic.status !== "ended" && (
             <button
               onClick={(e) => {
@@ -73,63 +108,97 @@ export default function TopicBox({ topic, user, openChat }) {
                 endTopic();
               }}
               style={{
-                marginTop: 5,
-                padding: "4px 8px",
-                fontSize: 12,
-                background: "#ff4d4d",
+                background: "#fee2e2",
                 border: "none",
-                borderRadius: 6,
+                borderRadius: 8,
+                padding: "6px 10px",
                 cursor: "pointer",
-                color: "white",
+                color: "#991b1b",
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '12px',
+                fontWeight: '600',
+                transition: 'all 0.2s'
               }}
             >
+              <XCircle size={14} />
               End
             </button>
           )}
         </div>
       </div>
 
-      {/* Buttons section */}
+      {/* Vote Buttons */}
       {topic.status !== "ended" && (
-        <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 12 }}>
           <button
             onClick={(e) => {
               e.stopPropagation();
-              openChat(topic, "agree");
+              handleVote("agree");
             }}
             style={{
               flex: 1,
-              background: "#2196f3",
+              background: "#3b82f6",
               border: "none",
               borderRadius: 8,
-              padding: "8px 0",
-              color: "white",
-              fontWeight: "bold",
+              padding: 12,
+              color: "#ffffff",
+              fontWeight: 600,
+              fontSize: 14,
               cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              transition: "all 0.2s",
             }}
           >
-            👍 Agree
+            <ThumbsUp size={18} />
+            Agree
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
-              openChat(topic, "disagree");
+              handleVote("disagree");
             }}
             style={{
               flex: 1,
-              background: "#e91e63",
+              background: "#ec4899",
               border: "none",
               borderRadius: 8,
-              padding: "8px 0",
-              color: "white",
-              fontWeight: "bold",
+              padding: 12,
+              color: "#ffffff",
+              fontWeight: 600,
+              fontSize: 14,
               cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              transition: "all 0.2s",
             }}
           >
-            👎 Disagree
+            <ThumbsDown size={18} />
+            Disagree
           </button>
+        </div>
+      )}
+
+      {/* Ended State */}
+      {topic.status === "ended" && (
+        <div style={{
+          textAlign: 'center',
+          padding: '12px',
+          background: '#f3f4f6',
+          borderRadius: '8px',
+          color: '#6b7280',
+          fontSize: '14px',
+          fontStyle: 'italic'
+        }}>
+          This debate has ended
         </div>
       )}
     </div>
   );
-}
+                  }
