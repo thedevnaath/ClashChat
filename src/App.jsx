@@ -8,22 +8,24 @@ import {
   signOut,
 } from "firebase/auth";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { LogOut, Zap } from "lucide-react";
 
 import Feed from "./components/Feed";
 import AddTopic from "./components/AddTopic";
 import ChatRoom from "./components/ChatRoom";
 import Leaderboard from "./components/LeaderBoard";
 import ResultBox from "./components/ResultBox";
+import BottomNav from "./components/BottomNav";
 
-// ✅ Main App
 export default function App() {
   const [user, setUser] = useState(null);
-  const [screen, setScreen] = useState("feed"); // feed | add | chat | leaderboard
+  const [screen, setScreen] = useState("feed");
   const [activeTopic, setActiveTopic] = useState(null);
+  const [chosenSide, setChosenSide] = useState(null);
   const [liveTopics, setLiveTopics] = useState([]);
   const [debugError, setDebugError] = useState("");
 
-  // 🔴 Capture global JS errors
+  // Capture global JS errors
   useEffect(() => {
     const errHandler = (event) => {
       const msg = event?.error?.message || event.message;
@@ -41,14 +43,14 @@ export default function App() {
     };
   }, []);
 
-  // 🔹 Auth persistence & listener
+  // Auth persistence & listener
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence);
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsub();
   }, []);
 
-  // 🔹 Live topics listener
+  // Live topics listener
   useEffect(() => {
     const q = query(collection(db, "topics"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(
@@ -66,7 +68,6 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // 🔹 Sign In / Out
   const signIn = async () => {
     try {
       await signInWithPopup(auth, provider);
@@ -74,11 +75,24 @@ export default function App() {
       setDebugError(e.message);
     }
   };
+
   const logout = async () => {
     await signOut(auth);
   };
 
-  // 🔹 If not signed in
+  const openChat = (topic, side) => {
+    setActiveTopic(topic);
+    setChosenSide(side);
+    setScreen("chat");
+  };
+
+  const closeChat = () => {
+    setScreen("feed");
+    setActiveTopic(null);
+    setChosenSide(null);
+  };
+
+  // Sign-in screen
   if (!user) {
     return (
       <div
@@ -88,26 +102,65 @@ export default function App() {
           alignItems: "center",
           justifyContent: "center",
           flexDirection: "column",
-          background: "linear-gradient(135deg, #0f172a, #1e1b4b)",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
       >
-        <h1 style={{ color: "white", marginBottom: 20 }}>ClashChat⚡</h1>
-        <button
-          onClick={signIn}
-          style={{
-            padding: "12px 20px",
-            borderRadius: 10,
-            border: "none",
-            background: "#7c3aed",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          Sign in with Google
-        </button>
+        <div style={{ 
+          background: '#ffffff',
+          padding: '48px 64px',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+            boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)'
+          }}>
+            <Zap size={36} color="#ffffff" />
+          </div>
+          <h1 style={{ 
+            color: "#111827", 
+            marginBottom: 8,
+            fontSize: '32px',
+            fontWeight: '700'
+          }}>
+            ClashChatz
+          </h1>
+          <p style={{ 
+            color: '#6b7280',
+            marginBottom: 32,
+            fontSize: '16px'
+          }}>
+            Join the debate. Pick a side. Make your voice heard.
+          </p>
+          <button
+            onClick={signIn}
+            style={{
+              padding: "14px 32px",
+              borderRadius: 10,
+              border: "none",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "#fff",
+              cursor: "pointer",
+              fontSize: '16px',
+              fontWeight: '600',
+              boxShadow: '0 4px 16px rgba(102, 126, 234, 0.4)',
+              transition: 'all 0.2s'
+            }}
+          >
+            Sign in with Google
+          </button>
+        </div>
 
         {debugError && (
-          <p style={{ color: "red", marginTop: 20, textAlign: "center" }}>
+          <p style={{ color: "white", marginTop: 20, textAlign: "center", background: 'rgba(239, 68, 68, 0.9)', padding: '12px 24px', borderRadius: '8px' }}>
             ⚠️ {debugError}
           </p>
         )}
@@ -115,229 +168,179 @@ export default function App() {
     );
   }
 
-  // 🔹 Main App UI
+  // Main app UI
   return (
     <div
       className="app-container"
       style={{
-        background: "linear-gradient(135deg, #0f172a, #1e1b4b)",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         minHeight: "100vh",
-        color: "white",
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '20px'
       }}
     >
-      {/* 🔍 Debug info line */}
-      <div
-        style={{
-          color: "#aaa",
-          textAlign: "center",
-          fontSize: "13px",
-          padding: "4px",
-        }}
-      >
-        Debug → Screen: {screen} | Topics: {liveTopics?.length || 0} | User:{" "}
-        {user?.email}
-      </div>
-
-      {/* 🔴 Error box (if any) */}
-      {debugError && (
-        <div
+      <div style={{
+        width: '100%',
+        maxWidth: '1200px',
+        background: '#ffffff',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 'calc(100vh - 40px)'
+      }}>
+        {/* Header */}
+        <header
           style={{
-            background: "red",
-            color: "white",
-            padding: "10px",
-            borderRadius: "8px",
-            margin: "10px",
-            fontSize: "14px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px 24px",
+            borderBottom: "1px solid #e5e7eb",
+            background: '#ffffff'
           }}
         >
-          ⚠️ <b>JS Error:</b> {debugError}
-        </div>
-      )}
-
-      {/* Header */}
-      <div
-        className="header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "10px 20px",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        <div className="brand" style={{ display: "flex", alignItems: "center" }}>
-          <div className="logo" style={{ marginRight: 8 }}>
-            ⚡
+          <div style={{ display: "flex", alignItems: "center", gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+            }}>
+              <Zap size={24} color="#ffffff" />
+            </div>
+            <h1 style={{ 
+              fontSize: "24px", 
+              margin: 0,
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              ClashChatz
+            </h1>
           </div>
-          <h1 style={{ fontSize: "20px", margin: 0 }}>ClashChat</h1>
-        </div>
-        <div
-          className="user-block"
-          style={{ display: "flex", alignItems: "center" }}
-        >
-          <img
-            src={user.photoURL}
-            alt="avatar"
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              marginRight: 8,
-            }}
-          />
-          <div className="name" style={{ fontSize: "14px" }}>
-            {user.displayName}
-          </div>
-          <button
-            onClick={logout}
-            style={{
-              marginLeft: 10,
-              background: "transparent",
-              border: "1px solid rgba(255,255,255,0.3)",
-              color: "white",
-              padding: "6px 8px",
-              borderRadius: 8,
-              cursor: "pointer",
-            }}
-          >
-            Log out
-          </button>
-        </div>
-      </div>
-
-      {/* Main */}
-      <div
-        className="main"
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          padding: "20px",
-          gap: "20px",
-        }}
-      >
-        <div className="feed-col" style={{ flex: 2 }}>
-          {screen === "feed" && (
-            <Feed
-              user={user}
-              openChat={(topic) => {
-                setActiveTopic(topic);
-                setScreen("chat");
+          <div style={{ display: "flex", alignItems: "center", gap: '16px' }}>
+            <img
+              src={user.photoURL}
+              alt="avatar"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                border: '2px solid #e5e7eb'
               }}
             />
-          )}
-          {screen === "add" && (
-            <AddTopic user={user} goBack={() => setScreen("feed")} />
-          )}
-          {screen === "chat" && activeTopic && (
-            <ChatRoom
-              topic={activeTopic}
-              user={user}
-              goBack={() => setScreen("feed")}
-            />
-          )}
-          {screen === "leaderboard" && <Leaderboard />}
-        </div>
+            <span style={{ fontSize: "14px", fontWeight: '500', color: '#374151' }}>
+              {user.displayName}
+            </span>
+            <button
+              onClick={logout}
+              style={{
+                background: "#f3f4f6",
+                border: "none",
+                color: "#6b7280",
+                padding: "8px 12px",
+                borderRadius: 8,
+                cursor: "pointer",
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'all 0.2s'
+              }}
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
+          </div>
+        </header>
 
-        <div className="side-col" style={{ flex: 1 }}>
+        {/* Error Display */}
+        {debugError && (
           <div
-            className="panel"
             style={{
-              background: "rgba(255,255,255,0.05)",
-              borderRadius: 12,
-              padding: 10,
-              marginBottom: 20,
+              background: "#fee2e2",
+              color: "#991b1b",
+              padding: "12px 24px",
+              fontSize: "14px",
+              borderBottom: '1px solid #fecaca'
             }}
           >
-            <h3 style={{ marginTop: 0 }}>Latest Topic Result</h3>
-            <ResultBox />
+            ⚠️ <b>Error:</b> {debugError}
           </div>
-          <div
-            className="panel"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              borderRadius: 12,
-              padding: 10,
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Leaderboard</h3>
-            <Leaderboard />
+        )}
+
+        {/* Main Content */}
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            overflow: 'hidden'
+          }}
+        >
+          {/* Feed Column */}
+          <div style={{ flex: 1, padding: "24px", overflowY: "auto" }}>
+            {screen === "feed" && (
+              <Feed user={user} openChat={openChat} />
+            )}
+            {screen === "add" && (
+              <AddTopic user={user} goBack={() => setScreen("feed")} />
+            )}
+            {screen === "chat" && activeTopic && (
+              <ChatRoom
+                topic={activeTopic}
+                user={user}
+                chosenSide={chosenSide}
+                closeChat={closeChat}
+              />
+            )}
           </div>
+
+          {/* Sidebar */}
+          <aside style={{ 
+            width: "320px", 
+            borderLeft: "1px solid #e5e7eb",
+            padding: "24px",
+            overflowY: 'auto',
+            background: '#f9fafb'
+          }}>
+            <div
+              style={{
+                background: "#ffffff",
+                border: '1px solid #e5e7eb',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 20,
+              }}
+            >
+              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: '#111827' }}>Latest Result</h3>
+              <ResultBox />
+            </div>
+            <div
+              style={{
+                background: "#ffffff",
+                border: '1px solid #e5e7eb',
+                borderRadius: 12,
+                padding: 16,
+              }}
+            >
+              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: '#111827' }}>Leaderboard</h3>
+              <Leaderboard />
+            </div>
+          </aside>
         </div>
-      </div>
 
-      {/* Floating Add Button */}
-      <button
-        className="fab"
-        onClick={() => setScreen("add")}
-        style={{
-          position: "fixed",
-          bottom: 70,
-          right: 20,
-          width: 56,
-          height: 56,
-          borderRadius: "50%",
-          background: "#7c3aed",
-          color: "white",
-          fontSize: "28px",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        +
-      </button>
-
-      {/* Bottom Navigation */}
-      <div
-        className="bottom-nav"
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "rgba(255,255,255,0.05)",
-          display: "flex",
-          justifyContent: "space-around",
-          padding: "10px 0",
-          backdropFilter: "blur(6px)",
-        }}
-      >
-        <button
-          onClick={() => setScreen("feed")}
-          style={{
-            background: "none",
-            border: "none",
-            color: "white",
-            fontSize: "20px",
-            cursor: "pointer",
-          }}
-        >
-          🏠
-        </button>
-        <button
-          onClick={() => setScreen("add")}
-          style={{
-            background: "none",
-            border: "none",
-            color: "white",
-            fontSize: "20px",
-            cursor: "pointer",
-          }}
-        >
-          ➕
-        </button>
-        <button
-          onClick={() => setScreen("leaderboard")}
-          style={{
-            background: "none",
-            border: "none",
-            color: "white",
-            fontSize: "20px",
-            cursor: "pointer",
-          }}
-        >
-          🏆
-        </button>
+        {/* Bottom Navigation */}
+        <BottomNav screen={screen} setScreen={setScreen} />
       </div>
     </div>
   );
-      }
+}
