@@ -9,14 +9,14 @@ import {
   serverTimestamp,
   where,
 } from "firebase/firestore";
+import { ArrowLeft, Send } from "lucide-react";
 
 export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [side] = useState(chosenSide);
   const messagesEndRef = useRef(null);
 
-  // 🔄 Fetch messages live
+  // Fetch messages live
   useEffect(() => {
     const q = query(
       collection(db, "messages"),
@@ -29,124 +29,162 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
     return unsubscribe;
   }, [topic.id]);
 
-  // ⬇️ Auto scroll to latest
+  // Auto scroll to latest
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ✉️ Send message
+  // Send message
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    await addDoc(collection(db, "messages"), {
-      text: input,
-      userId: user.uid,
-      userName: user.displayName || "Anonymous",
-      topicId: topic.id,
-      timestamp: serverTimestamp(),
-      side,
-    });
+    try {
+      await addDoc(collection(db, "messages"), {
+        text: input.trim(),
+        userId: user.uid,
+        userName: user.displayName || "Anonymous",
+        photoURL: user.photoURL || "",
+        topicId: topic.id,
+        timestamp: serverTimestamp(),
+        side: chosenSide, // CRITICAL: save the side
+      });
 
-    setInput("");
-  };
-
-  const getBubbleColor = (msgSide) => {
-    if (msgSide === "agree") return "rgba(33,150,243,0.25)"; // blue tint
-    if (msgSide === "disagree") return "rgba(233,30,99,0.25)"; // pink tint
-    return "#333";
+      setInput("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+      alert("Failed to send message. Please try again.");
+    }
   };
 
   return (
     <div
       style={{
-        width: "100%",
-        height: "100vh",
-        background: "#121212",
-        color: "white",
         display: "flex",
         flexDirection: "column",
+        height: "calc(100vh - 73px - 48px)",
       }}
     >
-      {/* 🔹 Header */}
+      {/* Chat Header */}
       <div
         style={{
-          padding: "12px 16px",
           background:
-            side === "agree"
-              ? "linear-gradient(90deg,#1565c0,#1e88e5)"
-              : "linear-gradient(90deg,#ad1457,#d81b60)",
+            chosenSide === "agree"
+              ? "linear-gradient(135deg, #3b82f6, #2563eb)"
+              : "linear-gradient(135deg, #ec4899, #db2777)",
+          padding: 16,
+          borderRadius: 12,
+          marginBottom: 16,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
         }}
       >
         <div>
-          <b>{topic.topicText}</b>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>
-            {side === "agree" ? "You chose: Agree 👍" : "You chose: Disagree 👎"}
-          </div>
+          <h3
+            style={{
+              color: "#ffffff",
+              margin: "0 0 4px 0",
+              fontSize: 16,
+              fontWeight: 600,
+            }}
+          >
+            {topic.topicText}
+          </h3>
+          <p
+            style={{
+              color: "rgba(255,255,255,0.9)",
+              margin: 0,
+              fontSize: 13,
+            }}
+          >
+            You chose: {chosenSide === "agree" ? "Agree" : "Disagree"}
+          </p>
         </div>
         <button
           onClick={closeChat}
           style={{
-            background: "transparent",
-            border: "1px solid white",
-            borderRadius: 6,
-            color: "white",
-            padding: "4px 10px",
+            background: "rgba(255,255,255,0.2)",
+            border: "none",
+            borderRadius: 8,
+            padding: "8px 12px",
+            color: "#ffffff",
             cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontWeight: 500,
+            transition: "all 0.2s",
           }}
         >
-          ⬅ Back
+          <ArrowLeft size={16} />
+          Back
         </button>
       </div>
 
-      {/* 💬 Messages */}
+      {/* Messages */}
       <div
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: 16,
+          marginBottom: 16,
           display: "flex",
           flexDirection: "column",
         }}
       >
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            style={{
-              alignSelf: msg.userId === user.uid ? "flex-end" : "flex-start",
-              background: getBubbleColor(msg.side),
-              marginBottom: 10,
-              borderRadius: 10,
-              padding: "8px 12px",
-              maxWidth: "75%",
-              wordWrap: "break-word",
-              border:
-                msg.userId === user.uid
-                  ? "1px solid rgba(255,255,255,0.2)"
-                  : "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            <div style={{ fontSize: 12, opacity: 0.7 }}>
-              {msg.userName} ({msg.side === "agree" ? "👍" : "👎"})
+        {messages.map((msg) => {
+          const isOwn = msg.userId === user.uid;
+          const msgSide = msg.side || "agree";
+
+          return (
+            <div
+              key={msg.id}
+              style={{
+                display: "flex",
+                justifyContent: isOwn ? "flex-end" : "flex-start",
+                marginBottom: 12,
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: "70%",
+                  background:
+                    msgSide === "agree" ? "#dbeafe" : "#fce7f3",
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  border:
+                    msgSide === "agree"
+                      ? "1px solid #bfdbfe"
+                      : "1px solid #fbcfe8",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#6b7280",
+                    marginBottom: 4,
+                  }}
+                >
+                  {msg.userName}
+                </div>
+                <div style={{ fontSize: 14, color: "#111827" }}>
+                  {msg.text}
+                </div>
+              </div>
             </div>
-            <div>{msg.text}</div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ✏️ Input */}
+      {/* Input Area */}
       {topic.status !== "ended" ? (
         <form
           onSubmit={sendMessage}
           style={{
             display: "flex",
-            padding: 10,
-            borderTop: "1px solid #333",
-            background: "#1e1e1e",
+            gap: 12,
           }}
         >
           <input
@@ -156,30 +194,34 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
             placeholder="Type your message..."
             style={{
               flex: 1,
-              padding: "10px 12px",
+              padding: "12px 16px",
               borderRadius: 8,
-              border: "none",
+              border: "1px solid #e5e7eb",
               outline: "none",
-              background: "#2c2c2c",
-              color: "white",
+              fontSize: 14,
+              background: "#ffffff",
             }}
           />
           <button
             type="submit"
             style={{
-              marginLeft: 10,
               background:
-                side === "agree"
-                  ? "linear-gradient(90deg,#1976d2,#42a5f5)"
-                  : "linear-gradient(90deg,#d81b60,#f06292)",
+                chosenSide === "agree"
+                  ? "linear-gradient(135deg, #3b82f6, #2563eb)"
+                  : "linear-gradient(135deg, #ec4899, #db2777)",
               border: "none",
               borderRadius: 8,
-              color: "white",
-              padding: "10px 16px",
+              padding: "12px 20px",
+              color: "#ffffff",
               cursor: "pointer",
-              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontWeight: 600,
+              transition: "all 0.2s",
             }}
           >
+            <Send size={18} />
             Send
           </button>
         </form>
@@ -188,8 +230,9 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
           style={{
             textAlign: "center",
             padding: 16,
-            background: "#1e1e1e",
-            color: "#aaa",
+            background: "#f3f4f6",
+            borderRadius: 8,
+            color: "#6b7280",
             fontStyle: "italic",
           }}
         >
@@ -198,4 +241,4 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
       )}
     </div>
   );
-        }
+                    }
