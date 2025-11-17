@@ -1,30 +1,85 @@
-// src/components/ResultBox.jsx
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { FileText } from "lucide-react";
 
-export default function ResultBox(){
+export default function ResultBox() {
   const [summary, setSummary] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(()=>{
-    // Assume we store results in `results/{topicId}`
-    // We'll read the most recent result by querying topics with status ended - but for simplicity try to check 'results/latest' doc if functions writes it
-    async function load(){
-      try{
-        // Try a results/latest doc
+  useEffect(() => {
+    async function load() {
+      try {
         const snap = await getDoc(doc(db, "results", "latest"));
-        if(snap.exists()) setSummary(snap.data().summary || "");
-      }catch(e){
-        console.error(e);
+        if (snap.exists()) {
+          setSummary(snap.data().summary || "");
+        }
+      } catch (e) {
+        console.error("Error loading results:", e);
+      } finally {
+        setLoading(false);
       }
     }
     load();
-  },[]);
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ 
+        color: "#6b7280", 
+        fontSize: '14px',
+        textAlign: 'center',
+        padding: '20px'
+      }}>
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div>
-      { summary ? <div style={{whiteSpace:"pre-wrap"}}>{summary}</div> : <div style={{color:"var(--muted)"}}>No results yet</div> }
+      {summary ? (
+        <div style={{
+          background: '#f9fafb',
+          padding: '12px',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            marginBottom: '8px'
+          }}>
+            <FileText size={16} color="#667eea" />
+            <span style={{
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#667eea',
+              textTransform: 'uppercase'
+            }}>
+              Latest Summary
+            </span>
+          </div>
+          <div style={{ 
+            whiteSpace: "pre-wrap",
+            fontSize: '14px',
+            color: '#374151',
+            lineHeight: '1.6'
+          }}>
+            {summary}
+          </div>
+        </div>
+      ) : (
+        <div style={{ 
+          color: "#6b7280",
+          fontSize: '14px',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          No results yet
+        </div>
+      )}
     </div>
   );
 }
-
