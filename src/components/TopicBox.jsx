@@ -8,15 +8,12 @@ export default function TopicBox({ topic, user, openChat }) {
 
   const handleVote = async (side) => {
     try {
-      // Save user's side choice to Firestore
       await setDoc(doc(db, "topics", topic.id, "sides", user.uid), {
         side,
         userId: user.uid,
         userName: user.displayName,
         timestamp: new Date().toISOString()
       });
-
-      // Open chat with chosen side
       openChat(topic, side);
     } catch (err) {
       console.error("Error saving side:", err);
@@ -63,7 +60,6 @@ export default function TopicBox({ topic, user, openChat }) {
         transition: "all 0.2s",
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -129,7 +125,6 @@ export default function TopicBox({ topic, user, openChat }) {
         </div>
       </div>
 
-      {/* Vote Buttons */}
       {topic.status !== "ended" && (
         <div style={{ display: "flex", gap: 12 }}>
           <button
@@ -185,7 +180,6 @@ export default function TopicBox({ topic, user, openChat }) {
         </div>
       )}
 
-      {/* Ended State */}
       {topic.status === "ended" && (
         <div style={{
           textAlign: 'center',
@@ -201,4 +195,4 @@ export default function TopicBox({ topic, user, openChat }) {
       )}
     </div>
   );
-                  }
+            }
