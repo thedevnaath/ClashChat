@@ -16,7 +16,6 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
-  // Fetch messages live
   useEffect(() => {
     const q = query(
       collection(db, "messages"),
@@ -29,12 +28,10 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
     return unsubscribe;
   }, [topic.id]);
 
-  // Auto scroll to latest
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send message
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -47,7 +44,7 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
         photoURL: user.photoURL || "",
         topicId: topic.id,
         timestamp: serverTimestamp(),
-        side: chosenSide, // CRITICAL: save the side
+        side: chosenSide,
       });
 
       setInput("");
@@ -65,7 +62,6 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
         height: "calc(100vh - 73px - 48px)",
       }}
     >
-      {/* Chat Header */}
       <div
         style={{
           background:
@@ -122,7 +118,6 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
         </button>
       </div>
 
-      {/* Messages */}
       <div
         style={{
           flex: 1,
@@ -178,7 +173,6 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       {topic.status !== "ended" ? (
         <form
           onSubmit={sendMessage}
@@ -241,4 +235,4 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
       )}
     </div>
   );
-                    }
+        }
