@@ -139,4 +139,4 @@ export default function AddTopic({ user, goBack }) {
       </div>
     </div>
   );
-            }
+}
