@@ -13,55 +13,58 @@ jobs:
       PROJECT_ID: clashchatz
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
-      OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
 
     steps:
-      # 1. Checkout code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'npm'
 
-      # 3. Install frontend dependencies (including lucide-react)
       - name: Install frontend dependencies
-        run: |
-          npm ci
-          npm list lucide-react || npm install lucide-react@^0.263.1
+        run: npm install
 
-      # 4. Install backend dependencies
       - name: Install Firebase Functions dependencies
-        run: npm ci
+        run: npm install
         working-directory: functions
 
-      # 5. Install Firebase CLI
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # 6. Authenticate Firebase using service account
       - name: Authenticate with Firebase
         run: echo "$GCP_SA_KEY" > "$GOOGLE_APPLICATION_CREDENTIALS"
 
-      # 7. Build React app
       - name: Build React App
         run: npm run build
         env:
           CI: false
 
-      # 8. Deploy to Firebase Hosting
       - name: Deploy to Firebase
         run: |
           firebase deploy --only hosting --project $PROJECT_ID --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
 
-      # 9. Deployment summary
       - name: Deployment Summary
         if: success()
         run: |
           echo "✅ Deployment successful!"
           echo "🔗 Visit: https://clashchatz.web.app"
+```
+
+4. Click **"Commit changes"** → **"Commit changes"**
+
+---
+
+### **3. Update .gitignore**
+
+1. Navigate to: `.gitignore`
+2. Click **pencil icon** (✏️)
+3. **Replace** with:
+```
+node_modules/
+.env
+build/
+package-lock.json
