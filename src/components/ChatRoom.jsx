@@ -236,3 +236,4 @@ export default function ChatRoom({ topic, user, chosenSide, closeChat }) {
     </div>
   );
         }
+
