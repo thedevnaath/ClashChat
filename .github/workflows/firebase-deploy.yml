@@ -52,19 +52,3 @@ jobs:
         run: |
           echo "✅ Deployment successful!"
           echo "🔗 Visit: https://clashchatz.web.app"
-```
-
-4. Click **"Commit changes"** → **"Commit changes"**
-
----
-
-### **3. Update .gitignore**
-
-1. Navigate to: `.gitignore`
-2. Click **pencil icon** (✏️)
-3. **Replace** with:
-```
-node_modules/
-.env
-build/
-package-lock.json
