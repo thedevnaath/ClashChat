@@ -1,4 +1,3 @@
-// functions/index.js
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const OpenAI = require("openai");
@@ -10,26 +9,25 @@ const db = admin.firestore();
 const app = express();
 app.use(cors({ origin: true }));
 
-// ⚙️ OpenAI config from Firebase environment (GitHub secret)
+// ⚙️ OpenAI config - try multiple sources
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_KEY,
+  apiKey: functions.config().openai?.key || process.env.OPENAI_KEY,
 });
 
 /**
  * 📘 Summarize Debate
- * Automatically generates a summary for a topic’s debate
- * and stores it in Firestore under "results/{topicId}"
  */
 app.post("/summarizeDebate", async (req, res) => {
   try {
     const { topicId } = req.body;
     if (!topicId) return res.status(400).send("Missing topicId");
 
+    // Get topic
     const topicDoc = await db.collection("topics").doc(topicId).get();
     if (!topicDoc.exists) return res.status(404).send("Topic not found");
-
     const topic = topicDoc.data();
 
+    // Get messages
     const messagesSnap = await db
       .collection("messages")
       .where("topicId", "==", topicId)
@@ -38,38 +36,66 @@ app.post("/summarizeDebate", async (req, res) => {
 
     const messages = messagesSnap.docs.map((doc) => doc.data());
 
+    if (messages.length === 0) {
+      return res.status(400).send("No messages found for this topic");
+    }
+
+    // Create prompt
     const prompt = `
 Topic: ${topic.topicText}
+
 Debate Messages:
-${messages.map((m) => `${m.voteSide}: ${m.messageText}`).join("\n")}
+${messages.map((m, i) => `${i + 1}. ${m.userName} (${m.side}): ${m.text}`).join("\n")}
+
 ---
-Summarize this debate in a few sentences and decide the winning side (Agree or Disagree).
+Analyze this debate and provide:
+1. A brief summary of the main arguments from both sides
+2. Which side presented stronger arguments
+3. Declare the winning side (Agree or Disagree)
+
+Keep it concise (3-4 sentences).
 `;
 
+    // Call OpenAI
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      max_tokens: 200,
     });
 
     const summary = completion.choices[0].message.content;
 
+    // Store result
     await db.collection("results").doc(topicId).set({
       topicId,
       summary,
+      topicText: topic.topicText,
+      messageCount: messages.length,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Also update "latest" for easy access
+    await db.collection("results").doc("latest").set({
+      topicId,
+      summary,
+      topicText: topic.topicText,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     console.log(`✅ Summary stored for topic: ${topicId}`);
-    res.json({ summary });
+    res.json({ success: true, summary });
   } catch (err) {
     console.error("❌ Error in summarizeDebate:", err);
-    res.status(500).send("Error generating summary");
+    res.status(500).json({ 
+      error: "Error generating summary", 
+      details: err.message 
+    });
   }
 });
 
 /**
  * 🕒 Auto End Old Topics
- * Runs every 24 hours and marks topics older than 30 days as ended
  */
 exports.autoEndOldTopics = functions.pubsub
   .schedule("every 24 hours")
@@ -83,7 +109,7 @@ exports.autoEndOldTopics = functions.pubsub
     const oldTopicsSnap = await db
       .collection("topics")
       .where("createdAt", "<=", thirtyDaysAgo)
-      .where("ended", "==", false)
+      .where("status", "==", "active")
       .get();
 
     if (oldTopicsSnap.empty) {
@@ -93,7 +119,7 @@ exports.autoEndOldTopics = functions.pubsub
 
     const batch = db.batch();
     oldTopicsSnap.forEach((doc) => {
-      batch.update(doc.ref, { ended: true });
+      batch.update(doc.ref, { status: "ended" });
     });
 
     await batch.commit();
@@ -103,6 +129,5 @@ exports.autoEndOldTopics = functions.pubsub
 
 /**
  * 🧩 Express endpoint export
- * Enables HTTP routes like /summarizeDebate
  */
 exports.api = functions.https.onRequest(app);
