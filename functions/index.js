@@ -1,43 +1,54 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const OpenAI = require("openai");
-const express = require("express");
-const cors = require("cors");
+const { createClient } = require('@supabase/supabase-js');
+const OpenAI = require('openai');
+const express = require('express');
+const cors = require('cors');
 
-admin.initializeApp();
-const db = admin.firestore();
 const app = express();
 app.use(cors({ origin: true }));
+app.use(express.json());
 
-// ⚙️ OpenAI config - try multiple sources
+// ⚙️ Supabase config
+const supabaseUrl = process.env.SUPABASE_URL || 'https://ohuvrlxzyctjbkzlpfup.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// ⚙️ OpenAI config
 const openai = new OpenAI({
-  apiKey: functions.config().openai?.key || process.env.OPENAI_KEY,
+  apiKey: process.env.OPENAI_KEY,
 });
 
 /**
  * 📘 Summarize Debate
  */
-app.post("/summarizeDebate", async (req, res) => {
+app.post('/summarizeDebate', async (req, res) => {
   try {
     const { topicId } = req.body;
-    if (!topicId) return res.status(400).send("Missing topicId");
+    if (!topicId) return res.status(400).send('Missing topicId');
 
-    // Get topic
-    const topicDoc = await db.collection("topics").doc(topicId).get();
-    if (!topicDoc.exists) return res.status(404).send("Topic not found");
-    const topic = topicDoc.data();
+    // Get topic from Supabase
+    const { data: topic, error: topicError } = await supabase
+      .from('topics')
+      .select('*')
+      .eq('id', topicId)
+      .single();
 
-    // Get messages
-    const messagesSnap = await db
-      .collection("messages")
-      .where("topicId", "==", topicId)
-      .orderBy("timestamp")
-      .get();
+    if (topicError || !topic) {
+      return res.status(404).send('Topic not found');
+    }
 
-    const messages = messagesSnap.docs.map((doc) => doc.data());
+    // Get messages from Supabase
+    const { data: messages, error: messagesError } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('topicId', topicId)
+      .order('timestamp', { ascending: true });
 
-    if (messages.length === 0) {
-      return res.status(400).send("No messages found for this topic");
+    if (messagesError) {
+      return res.status(500).send('Error fetching messages');
+    }
+
+    if (!messages || messages.length === 0) {
+      return res.status(400).send('No messages found for this topic');
     }
 
     // Create prompt
@@ -45,7 +56,7 @@ app.post("/summarizeDebate", async (req, res) => {
 Topic: ${topic.topicText}
 
 Debate Messages:
-${messages.map((m, i) => `${i + 1}. ${m.userName} (${m.side}): ${m.text}`).join("\n")}
+${messages.map((m, i) => `${i + 1}. ${m.userName} (${m.side}): ${m.text}`).join('\n')}
 
 ---
 Analyze this debate and provide:
@@ -58,76 +69,53 @@ Keep it concise (3-4 sentences).
 
     // Call OpenAI
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 200,
     });
 
     const summary = completion.choices[0].message.content;
 
-    // Store result
-    await db.collection("results").doc(topicId).set({
-      topicId,
-      summary,
-      topicText: topic.topicText,
-      messageCount: messages.length,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    // Store result in Supabase
+    const { error: insertError } = await supabase
+      .from('results')
+      .upsert({
+        topicId,
+        summary,
+        topicText: topic.topicText,
+        messageCount: messages.length,
+        createdAt: new Date().toISOString(),
+      }, {
+        onConflict: 'topicId'
+      });
 
-    // Also update "latest" for easy access
-    await db.collection("results").doc("latest").set({
-      topicId,
-      summary,
-      topicText: topic.topicText,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    if (insertError) {
+      console.error('❌ Error storing result:', insertError);
+      return res.status(500).json({ error: 'Error storing summary' });
+    }
 
     console.log(`✅ Summary stored for topic: ${topicId}`);
     res.json({ success: true, summary });
   } catch (err) {
-    console.error("❌ Error in summarizeDebate:", err);
+    console.error('❌ Error in summarizeDebate:', err);
     res.status(500).json({ 
-      error: "Error generating summary", 
+      error: 'Error generating summary', 
       details: err.message 
     });
   }
 });
 
 /**
- * 🕒 Auto End Old Topics
+ * 🏥 Health check endpoint
  */
-exports.autoEndOldTopics = functions.pubsub
-  .schedule("every 24 hours")
-  .onRun(async () => {
-    const now = admin.firestore.Timestamp.now();
-    const thirtyDaysAgo = new Date(
-      now.toDate().getTime() - 30 * 24 * 60 * 60 * 1000
-    );
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'ClashChat API is running' });
+});
 
-    console.log("⏳ Checking for topics older than 30 days...");
-    const oldTopicsSnap = await db
-      .collection("topics")
-      .where("createdAt", "<=", thirtyDaysAgo)
-      .where("status", "==", "active")
-      .get();
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
 
-    if (oldTopicsSnap.empty) {
-      console.log("✅ No topics to end today.");
-      return null;
-    }
-
-    const batch = db.batch();
-    oldTopicsSnap.forEach((doc) => {
-      batch.update(doc.ref, { status: "ended" });
-    });
-
-    await batch.commit();
-    console.log(`🏁 Ended ${oldTopicsSnap.size} topics.`);
-    return null;
-  });
-
-/**
- * 🧩 Express endpoint export
- */
-exports.api = functions.https.onRequest(app);
+module.exports = app;
