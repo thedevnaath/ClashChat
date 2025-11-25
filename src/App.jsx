@@ -200,6 +200,9 @@ export default function App() {
             padding: "16px 24px",
             borderBottom: "1px solid #e5e7eb",
             background: '#ffffff'
+            position: 'sticky',
+            top: 0,
+            zIndex: 999
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: '12px' }}>
