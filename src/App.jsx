@@ -189,9 +189,10 @@ export default function App() {
         boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
         display: 'flex',
         flexDirection: 'column',
-        minHeight: 'calc(100vh - 40px)'
+        minHeight: 'calc(100vh - 40px)',
+        position: 'relative'
       }}>
-        {/* Header */}
+        {/* Header - Sticky at top */}
         <header
           style={{
             display: "flex",
@@ -199,7 +200,7 @@ export default function App() {
             alignItems: "center",
             padding: "16px 24px",
             borderBottom: "1px solid #e5e7eb",
-            background: '#ffffff'
+            background: '#ffffff',
             position: 'sticky',
             top: 0,
             zIndex: 999
@@ -341,10 +342,15 @@ export default function App() {
           </aside>
         </div>
 
-        {/* Bottom Navigation */}
-        <BottomNav screen={screen} setScreen={setScreen} />
+        {/* Bottom Navigation - Sticky at bottom */}
+        <div style={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 999
+        }}>
+          <BottomNav screen={screen} setScreen={setScreen} />
+        </div>
       </div>
     </div>
   );
-}
-
+          }
