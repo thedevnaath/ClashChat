@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { auth, provider, db } from "./firebase";
+import { auth, provider } from "./firebase";
+import { supabase } from "./supabase";
 import {
   signInWithPopup,
   onAuthStateChanged,
@@ -7,7 +8,6 @@ import {
   browserLocalPersistence,
   signOut,
 } from "firebase/auth";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { LogOut, Zap } from "lucide-react";
 
 import Feed from "./components/Feed";
@@ -22,7 +22,6 @@ export default function App() {
   const [screen, setScreen] = useState("feed");
   const [activeTopic, setActiveTopic] = useState(null);
   const [chosenSide, setChosenSide] = useState(null);
-  const [liveTopics, setLiveTopics] = useState([]);
   const [debugError, setDebugError] = useState("");
 
   // Capture global JS errors
@@ -43,28 +42,30 @@ export default function App() {
     };
   }, []);
 
-  // Auth persistence & listener
+  // Auth persistence & listener + Sync to Supabase
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence);
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsub();
-  }, []);
-
-  // Live topics listener
-  useEffect(() => {
-    const q = query(collection(db, "topics"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        console.log("✅ Firestore topics fetched:", data.length);
-        setLiveTopics(data);
-      },
-      (err) => {
-        console.error("❌ Firestore listener error:", err.message);
-        setDebugError(err.message);
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      
+      // Sync user to Supabase when they sign in
+      if (u) {
+        const { error } = await supabase
+          .from('users')
+          .upsert({
+            firebase_uid: u.uid,
+            email: u.email,
+            display_name: u.displayName,
+            photo_url: u.photoURL
+          }, {
+            onConflict: 'firebase_uid'
+          });
+        
+        if (error) {
+          console.error("Error syncing user to Supabase:", error);
+        }
       }
-    );
+    });
     return () => unsub();
   }, []);
 
