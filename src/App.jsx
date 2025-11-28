@@ -8,7 +8,7 @@ import {
   browserLocalPersistence,
   signOut,
 } from "firebase/auth";
-import { LogOut, Zap } from "lucide-react";
+import { LogOut, Zap, Moon, Sun, User } from "lucide-react";
 
 import Feed from "./components/Feed";
 import AddTopic from "./components/AddTopic";
@@ -23,6 +23,8 @@ export default function App() {
   const [activeTopic, setActiveTopic] = useState(null);
   const [chosenSide, setChosenSide] = useState(null);
   const [debugError, setDebugError] = useState("");
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   // Capture global JS errors
   useEffect(() => {
@@ -69,6 +71,19 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.profile-menu-container')) {
+        setShowProfileMenu(false);
+      }
+    };
+    if (showProfileMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showProfileMenu]);
+
   const signIn = async () => {
     try {
       await signInWithPopup(auth, provider);
@@ -79,6 +94,12 @@ export default function App() {
 
   const logout = async () => {
     await signOut(auth);
+    setShowProfileMenu(false);
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    // You can add logic to apply dark mode styles here
   };
 
   const openChat = (topic, side) => {
@@ -231,40 +252,111 @@ export default function App() {
               ClashChatz
             </h1>
           </div>
+          
           <div style={{ display: "flex", alignItems: "center", gap: '16px' }}>
-            <img
-              src={user.photoURL}
-              alt="avatar"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                border: '2px solid #e5e7eb'
-              }}
-            />
             <span style={{ fontSize: "14px", fontWeight: '500', color: '#374151' }}>
               {user.displayName}
             </span>
-            <button
-              onClick={logout}
-              style={{
-                background: "#f3f4f6",
-                border: "none",
-                color: "#6b7280",
-                padding: "8px 12px",
-                borderRadius: 8,
-                cursor: "pointer",
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s'
-              }}
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
+            
+            {/* Profile Menu Container */}
+            <div className="profile-menu-container" style={{ position: 'relative' }}>
+              <img
+                src={user.photoURL}
+                alt="avatar"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  border: '3px solid #667eea',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: showProfileMenu ? '0 0 0 4px rgba(102, 126, 234, 0.2)' : 'none'
+                }}
+              />
+              
+              {/* Dropdown Menu */}
+              {showProfileMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50px',
+                  right: 0,
+                  background: '#ffffff',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  border: '1px solid #e5e7eb',
+                  minWidth: '200px',
+                  overflow: 'hidden',
+                  zIndex: 1000
+                }}>
+                  {/* Profile Info */}
+                  <div style={{
+                    padding: '16px',
+                    borderBottom: '1px solid #e5e7eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <User size={20} color="#667eea" />
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                        {user.displayName}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                        {user.email}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Dark Mode Toggle */}
+                  <button
+                    onClick={toggleDarkMode}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#374151',
+                      transition: 'all 0.2s',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                    onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                  >
+                    {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                    <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                  </button>
+                  
+                  {/* Logout */}
+                  <button
+                    onClick={logout}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#dc2626',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#fef2f2'}
+                    onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                  >
+                    <LogOut size={18} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -354,4 +446,4 @@ export default function App() {
       </div>
     </div>
   );
-          }
+      }
