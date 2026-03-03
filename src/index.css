@@ -1,5 +1,29 @@
 /* ClashChatz - Flat Design CSS */
 
+:root {
+  --bg-gradient-start: #667eea;
+  --bg-gradient-end: #764ba2;
+  --bg-card: #ffffff;
+  --bg-sidebar: #f9fafb;
+  --bg-muted: #f3f4f6;
+  --text-main: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+}
+
+.dark {
+  --bg-gradient-start: #1e1b4b;
+  --bg-gradient-end: #312e81;
+  --bg-card: #1f2937;
+  --bg-sidebar: #111827;
+  --bg-muted: #374151;
+  --text-main: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --border-color: #374151;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -18,8 +42,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #111827;
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  color: var(--text-main);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Scrollbar styling */
@@ -29,16 +54,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: var(--bg-muted);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--text-muted);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--text-secondary);
 }
 
 /* Button hover effects */
@@ -63,7 +88,7 @@ button:disabled {
 /* Input focus states */
 input:focus,
 textarea:focus {
-  border-color: #667eea !important;
+  border-color: var(--bg-gradient-start) !important;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -97,11 +122,11 @@ textarea:focus {
 
 /* Selection styling */
 ::selection {
-  background: #667eea;
+  background: var(--bg-gradient-start);
   color: white;
 }
 
 ::-moz-selection {
-  background: #667eea;
+  background: var(--bg-gradient-start);
   color: white;
 }
