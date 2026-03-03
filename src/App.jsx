@@ -98,8 +98,13 @@ export default function App() {
   };
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // You can add logic to apply dark mode styles here
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const openChat = (topic, side) => {
@@ -124,11 +129,11 @@ export default function App() {
           alignItems: "center",
           justifyContent: "center",
           flexDirection: "column",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)",
         }}
       >
         <div style={{ 
-          background: '#ffffff',
+          background: 'var(--bg-card)',
           padding: '48px 64px',
           borderRadius: '16px',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
@@ -137,7 +142,7 @@ export default function App() {
           <div style={{
             width: '64px',
             height: '64px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)',
             borderRadius: '16px',
             display: 'flex',
             alignItems: 'center',
@@ -148,7 +153,7 @@ export default function App() {
             <Zap size={36} color="#ffffff" />
           </div>
           <h1 style={{ 
-            color: "#111827", 
+            color: "var(--text-main)", 
             marginBottom: 8,
             fontSize: '32px',
             fontWeight: '700'
@@ -156,7 +161,7 @@ export default function App() {
             ClashChatz
           </h1>
           <p style={{ 
-            color: '#6b7280',
+            color: 'var(--text-muted)',
             marginBottom: 32,
             fontSize: '16px'
           }}>
@@ -168,7 +173,7 @@ export default function App() {
               padding: "14px 32px",
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)",
               color: "#fff",
               cursor: "pointer",
               fontSize: '16px',
@@ -195,7 +200,7 @@ export default function App() {
     <div
       className="app-container"
       style={{
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)",
         minHeight: "100vh",
         display: 'flex',
         justifyContent: 'center',
@@ -205,7 +210,7 @@ export default function App() {
       <div style={{
         width: '100%',
         maxWidth: '1200px',
-        background: '#ffffff',
+        background: 'var(--bg-card)',
         borderRadius: '16px',
         overflow: 'hidden',
         boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
@@ -221,8 +226,8 @@ export default function App() {
             justifyContent: "space-between",
             alignItems: "center",
             padding: "16px 24px",
-            borderBottom: "1px solid #e5e7eb",
-            background: '#ffffff',
+            borderBottom: "1px solid var(--border-color)",
+            background: 'var(--bg-card)',
             position: 'sticky',
             top: 0,
             zIndex: 999
@@ -232,7 +237,7 @@ export default function App() {
             <div style={{
               width: '40px',
               height: '40px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -245,7 +250,7 @@ export default function App() {
               fontSize: "24px", 
               margin: 0,
               fontWeight: '700',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
@@ -254,7 +259,7 @@ export default function App() {
           </div>
           
           <div style={{ display: "flex", alignItems: "center", gap: '16px' }}>
-            <span style={{ fontSize: "14px", fontWeight: '500', color: '#374151' }}>
+            <span style={{ fontSize: "14px", fontWeight: '500', color: 'var(--text-secondary)' }}>
               {user.displayName}
             </span>
             
@@ -268,7 +273,7 @@ export default function App() {
                   width: 40,
                   height: 40,
                   borderRadius: "50%",
-                  border: '3px solid #667eea',
+                  border: '3px solid var(--bg-gradient-start)',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   boxShadow: showProfileMenu ? '0 0 0 4px rgba(102, 126, 234, 0.2)' : 'none'
@@ -281,10 +286,10 @@ export default function App() {
                   position: 'absolute',
                   top: '50px',
                   right: 0,
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                   borderRadius: '12px',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid var(--border-color)',
                   minWidth: '200px',
                   overflow: 'hidden',
                   zIndex: 1000
@@ -292,17 +297,17 @@ export default function App() {
                   {/* Profile Info */}
                   <div style={{
                     padding: '16px',
-                    borderBottom: '1px solid #e5e7eb',
+                    borderBottom: '1px solid var(--border-color)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px'
                   }}>
-                    <User size={20} color="#667eea" />
+                    <User size={20} color="var(--bg-gradient-start)" />
                     <div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
                         {user.displayName}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                         {user.email}
                       </div>
                     </div>
@@ -321,11 +326,11 @@ export default function App() {
                       gap: '12px',
                       cursor: 'pointer',
                       fontSize: '14px',
-                      color: '#374151',
+                      color: 'var(--text-secondary)',
                       transition: 'all 0.2s',
-                      borderBottom: '1px solid #e5e7eb'
+                      borderBottom: '1px solid var(--border-color)'
                     }}
-                    onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                    onMouseEnter={(e) => e.target.style.background = 'var(--bg-muted)'}
                     onMouseLeave={(e) => e.target.style.background = 'transparent'}
                   >
                     {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -404,32 +409,32 @@ export default function App() {
           {/* Sidebar */}
           <aside style={{ 
             width: "320px", 
-            borderLeft: "1px solid #e5e7eb",
+            borderLeft: "1px solid var(--border-color)",
             padding: "24px",
             overflowY: 'auto',
-            background: '#f9fafb'
+            background: 'var(--bg-sidebar)'
           }}>
             <div
               style={{
-                background: "#ffffff",
-                border: '1px solid #e5e7eb',
+                background: "var(--bg-card)",
+                border: '1px solid var(--border-color)',
                 borderRadius: 12,
                 padding: 16,
                 marginBottom: 20,
               }}
             >
-              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: '#111827' }}>Latest Result</h3>
+              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: 'var(--text-main)' }}>Latest Result</h3>
               <ResultBox />
             </div>
             <div
               style={{
-                background: "#ffffff",
-                border: '1px solid #e5e7eb',
+                background: "var(--bg-card)",
+                border: '1px solid var(--border-color)',
                 borderRadius: 12,
                 padding: 16,
               }}
             >
-              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: '#111827' }}>Leaderboard</h3>
+              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: 'var(--text-main)' }}>Leaderboard</h3>
               <Leaderboard />
             </div>
           </aside>
@@ -446,4 +451,4 @@ export default function App() {
       </div>
     </div>
   );
-      }
+}
