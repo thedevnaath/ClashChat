@@ -9,39 +9,22 @@ export default function BottomNav({ screen, setScreen }) {
   ];
 
   return (
-    <nav
-      style={{
-        background: "#ffffff",
-        borderTop: "1px solid #e5e7eb",
-        padding: "12px 24px",
-        display: "flex",
-        justifyContent: "space-around",
-      }}
-    >
+    <nav style={{ background: "transparent", padding: "12px 20px", display: "flex", justifyContent: "space-around" }}>
       {navItems.map(({ id, icon: Icon, label }) => (
         <button
-          key={id}
-          onClick={() => setScreen(id)}
+          key={id} onClick={() => setScreen(id)}
           style={{
-            background: screen === id ? "#ede9fe" : "transparent",
-            border: "none",
-            borderRadius: 8,
-            padding: "8px 16px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            color: screen === id ? "#7c3aed" : "#6b7280",
-            fontWeight: 500,
-            fontSize: '14px',
-            transition: "all 0.2s",
+            background: screen === id ? "var(--bg-muted)" : "transparent",
+            border: "none", borderRadius: 8, padding: "8px 20px", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 8,
+            color: screen === id ? "var(--text-main)" : "var(--text-muted)",
+            fontWeight: screen === id ? 600 : 500, fontSize: '14px'
           }}
         >
-          <Icon size={20} />
+          <Icon size={20} color={screen === id ? "#a855f7" : "currentColor"} />
           {label}
         </button>
       ))}
     </nav>
   );
 }
-
