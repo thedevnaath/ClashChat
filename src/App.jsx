@@ -26,16 +26,9 @@ export default function App() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  // Capture global JS errors
   useEffect(() => {
-    const errHandler = (event) => {
-      const msg = event?.error?.message || event.message;
-      setDebugError(msg);
-    };
-    const rejHandler = (event) => {
-      const msg = event?.reason?.message || event.reason;
-      setDebugError(msg);
-    };
+    const errHandler = (event) => setDebugError(event?.error?.message || event.message);
+    const rejHandler = (event) => setDebugError(event?.reason?.message || event.reason);
     window.addEventListener("error", errHandler);
     window.addEventListener("unhandledrejection", rejHandler);
     return () => {
@@ -44,52 +37,30 @@ export default function App() {
     };
   }, []);
 
-  // Auth persistence & listener + Sync to Supabase
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence);
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      
-      // Sync user to Supabase when they sign in
       if (u) {
-        const { error } = await supabase
-          .from('users')
-          .upsert({
-            firebase_uid: u.uid,
-            email: u.email,
-            display_name: u.displayName,
-            photo_url: u.photoURL
-          }, {
-            onConflict: 'firebase_uid'
-          });
-        
-        if (error) {
-          console.error("Error syncing user to Supabase:", error);
-        }
+        await supabase.from('users').upsert({
+            firebase_uid: u.uid, email: u.email, display_name: u.displayName, photo_url: u.photoURL
+          }, { onConflict: 'firebase_uid' });
       }
     });
     return () => unsub();
   }, []);
 
-  // Close profile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest('.profile-menu-container')) {
-        setShowProfileMenu(false);
-      }
+      if (!e.target.closest('.profile-menu-container')) setShowProfileMenu(false);
     };
-    if (showProfileMenu) {
-      document.addEventListener('click', handleClickOutside);
-    }
+    if (showProfileMenu) document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showProfileMenu]);
 
   const signIn = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      setDebugError(e.message);
-    }
+    try { await signInWithPopup(auth, provider); } 
+    catch (e) { setDebugError(e.message); }
   };
 
   const logout = async () => {
@@ -100,11 +71,8 @@ export default function App() {
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    if (newMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   };
 
   const openChat = (topic, side) => {
@@ -119,333 +87,102 @@ export default function App() {
     setChosenSide(null);
   };
 
-  // Sign-in screen
   if (!user) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          background: "linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)",
-        }}
-      >
-        <div style={{ 
-          background: 'var(--bg-card)',
-          padding: '48px 64px',
-          borderRadius: '16px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            background: 'linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 24px',
-            boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)'
-          }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: "linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)" }}>
+        <div style={{ background: '#ffffff', padding: '48px 64px', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', textAlign: 'center' }}>
+          <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
             <Zap size={36} color="#ffffff" />
           </div>
-          <h1 style={{ 
-            color: "var(--text-main)", 
-            marginBottom: 8,
-            fontSize: '32px',
-            fontWeight: '700'
-          }}>
-            ClashChatz
-          </h1>
-          <p style={{ 
-            color: 'var(--text-muted)',
-            marginBottom: 32,
-            fontSize: '16px'
-          }}>
-            Join the debate. Pick a side. Make your voice heard.
-          </p>
-          <button
-            onClick={signIn}
-            style={{
-              padding: "14px 32px",
-              borderRadius: 10,
-              border: "none",
-              background: "linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)",
-              color: "#fff",
-              cursor: "pointer",
-              fontSize: '16px',
-              fontWeight: '600',
-              boxShadow: '0 4px 16px rgba(102, 126, 234, 0.4)',
-              transition: 'all 0.2s'
-            }}
-          >
-            Sign in with Google
-          </button>
+          <h1 style={{ color: "#111827", marginBottom: 8, fontSize: '32px', fontWeight: '700' }}>ClashChatz</h1>
+          <p style={{ color: '#6b7280', marginBottom: 32, fontSize: '16px' }}>Join the debate. Pick a side.</p>
+          <button onClick={signIn} style={{ padding: "14px 32px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "#fff", cursor: "pointer", fontSize: '16px', fontWeight: '600' }}>Sign in with Google</button>
         </div>
-
-        {debugError && (
-          <p style={{ color: "white", marginTop: 20, textAlign: "center", background: 'rgba(239, 68, 68, 0.9)', padding: '12px 24px', borderRadius: '8px' }}>
-            ⚠️ {debugError}
-          </p>
-        )}
       </div>
     );
   }
 
-  // Main app UI
   return (
-    <div
-      className="app-container"
-      style={{
-        background: "linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)",
-        minHeight: "100vh",
-        display: 'flex',
-        justifyContent: 'center',
-        padding: '20px'
-      }}
-    >
-      <div style={{
-        width: '100%',
-        maxWidth: '1200px',
-        background: 'var(--bg-card)',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 'calc(100vh - 40px)',
-        position: 'relative'
+    <div style={{ background: "var(--bg-body)", minHeight: "100vh", display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Sticky Header - Edge to Edge Background, Centered Content */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 999,
+        background: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)',
+        display: 'flex', justifyContent: 'center', width: '100%'
       }}>
-        {/* Header - Sticky at top */}
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "16px 24px",
-            borderBottom: "1px solid var(--border-color)",
-            background: 'var(--bg-card)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 999
-          }}
-        >
+        <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px' }}>
           <div style={{ display: "flex", alignItems: "center", gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
-            }}>
-              <Zap size={24} color="#ffffff" />
+            <div style={{ width: '36px', height: '36px', background: 'var(--logo-gradient)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Zap size={20} color="#ffffff" />
             </div>
-            <h1 style={{ 
-              fontSize: "24px", 
-              margin: 0,
-              fontWeight: '700',
-              background: 'linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
+            <h1 style={{ fontSize: "22px", margin: 0, fontWeight: '800', background: 'var(--logo-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               ClashChatz
             </h1>
           </div>
           
           <div style={{ display: "flex", alignItems: "center", gap: '16px' }}>
-            <span style={{ fontSize: "14px", fontWeight: '500', color: 'var(--text-secondary)' }}>
-              {user.displayName}
-            </span>
-            
-            {/* Profile Menu Container */}
             <div className="profile-menu-container" style={{ position: 'relative' }}>
-              <img
-                src={user.photoURL}
-                alt="avatar"
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  border: '3px solid var(--bg-gradient-start)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  boxShadow: showProfileMenu ? '0 0 0 4px rgba(102, 126, 234, 0.2)' : 'none'
-                }}
+              <img src={user.photoURL} alt="avatar" onClick={() => setShowProfileMenu(!showProfileMenu)}
+                style={{ width: 36, height: 36, borderRadius: "50%", cursor: 'pointer', border: '2px solid var(--border-color)' }}
               />
-              
-              {/* Dropdown Menu */}
               {showProfileMenu && (
-                <div style={{
-                  position: 'absolute',
-                  top: '50px',
-                  right: 0,
-                  background: 'var(--bg-card)',
-                  borderRadius: '12px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                  border: '1px solid var(--border-color)',
-                  minWidth: '200px',
-                  overflow: 'hidden',
-                  zIndex: 1000
-                }}>
-                  {/* Profile Info */}
-                  <div style={{
-                    padding: '16px',
-                    borderBottom: '1px solid var(--border-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
-                  }}>
-                    <User size={20} color="var(--bg-gradient-start)" />
+                <div style={{ position: 'absolute', top: '45px', right: 0, background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', minWidth: '200px', overflow: 'hidden', zIndex: 1000, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+                  <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <User size={20} color="var(--text-secondary)" />
                     <div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
-                        {user.displayName}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        {user.email}
-                      </div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>{user.displayName}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{user.email}</div>
                     </div>
                   </div>
-                  
-                  {/* Dark Mode Toggle */}
-                  <button
-                    onClick={toggleDarkMode}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: 'none',
-                      background: 'transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      color: 'var(--text-secondary)',
-                      transition: 'all 0.2s',
-                      borderBottom: '1px solid var(--border-color)'
-                    }}
-                    onMouseEnter={(e) => e.target.style.background = 'var(--bg-muted)'}
-                    onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                  >
-                    {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-                    <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                  <button onClick={toggleDarkMode} style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)' }} onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
+                    {darkMode ? <Sun size={18} /> : <Moon size={18} />} <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
                   </button>
-                  
-                  {/* Logout */}
-                  <button
-                    onClick={logout}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: 'none',
-                      background: 'transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      color: '#dc2626',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.target.style.background = '#fef2f2'}
-                    onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                  >
-                    <LogOut size={18} />
-                    <span>Logout</span>
+                  <button onClick={logout} style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', fontSize: '14px', color: '#ef4444' }} onMouseEnter={(e) => e.target.style.background = 'var(--bg-hover)'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>
+                    <LogOut size={18} /> <span>Logout</span>
                   </button>
                 </div>
               )}
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Error Display */}
-        {debugError && (
-          <div
-            style={{
-              background: "#fee2e2",
-              color: "#991b1b",
-              padding: "12px 24px",
-              fontSize: "14px",
-              borderBottom: '1px solid #fecaca'
-            }}
-          >
-            ⚠️ <b>Error:</b> {debugError}
-          </div>
-        )}
+      {debugError && ( <div style={{ background: "#fee2e2", color: "#991b1b", padding: "12px 24px", fontSize: "14px", textAlign: 'center' }}>⚠️ {debugError}</div> )}
 
-        {/* Main Content */}
-        <div
-          style={{
-            display: "flex",
-            flex: 1,
-            overflow: 'hidden'
-          }}
-        >
-          {/* Feed Column */}
-          <div style={{ flex: 1, padding: "24px", overflowY: "auto" }}>
-            {screen === "feed" && (
-              <Feed user={user} openChat={openChat} />
-            )}
-            {screen === "add" && (
-              <AddTopic user={user} goBack={() => setScreen("feed")} />
-            )}
-            {screen === "chat" && activeTopic && (
-              <ChatRoom
-                topic={activeTopic}
-                user={user}
-                chosenSide={chosenSide}
-                closeChat={closeChat}
-              />
-            )}
+      {/* Main Content - Centered */}
+      <main style={{ flex: 1, display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <div style={{ width: '100%', maxWidth: '1000px', display: 'flex' }}>
+          
+          {/* Feed/Chat Area */}
+          <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+            {screen === "feed" && <Feed user={user} openChat={openChat} />}
+            {screen === "add" && <AddTopic user={user} goBack={() => setScreen("feed")} />}
+            {screen === "chat" && activeTopic && <ChatRoom topic={activeTopic} user={user} chosenSide={chosenSide} closeChat={closeChat} />}
           </div>
 
-          {/* Sidebar */}
-          <aside style={{ 
-            width: "320px", 
-            borderLeft: "1px solid var(--border-color)",
-            padding: "24px",
-            overflowY: 'auto',
-            background: 'var(--bg-sidebar)'
-          }}>
-            <div
-              style={{
-                background: "var(--bg-card)",
-                border: '1px solid var(--border-color)',
-                borderRadius: 12,
-                padding: 16,
-                marginBottom: 20,
-              }}
-            >
-              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: 'var(--text-main)' }}>Latest Result</h3>
+          {/* Sidebar Area (Hidden on Mobile via CSS) */}
+          <aside style={{ width: "320px", borderLeft: "1px solid var(--border-color)", padding: "20px", overflowY: 'auto' }}>
+            <div style={{ background: "transparent", paddingBottom: 20 }}>
+              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px' }}>Latest Result</h3>
               <ResultBox />
             </div>
-            <div
-              style={{
-                background: "var(--bg-card)",
-                border: '1px solid var(--border-color)',
-                borderRadius: 12,
-                padding: 16,
-              }}
-            >
-              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '600', color: 'var(--text-main)' }}>Leaderboard</h3>
+            <div style={{ background: "transparent" }}>
+              <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px' }}>Rankings</h3>
               <Leaderboard />
             </div>
           </aside>
+          
         </div>
+      </main>
 
-        {/* Bottom Navigation - Sticky at bottom */}
-        <div style={{
-          position: 'sticky',
-          bottom: 0,
-          zIndex: 999
-        }}>
+      {/* Sticky Bottom Nav - Edge to Edge Background, Centered Content */}
+      <div style={{
+        position: 'sticky', bottom: 0, zIndex: 999,
+        background: 'var(--bg-card)', borderTop: '1px solid var(--border-color)',
+        display: 'flex', justifyContent: 'center', width: '100%'
+      }}>
+        <div style={{ width: '100%', maxWidth: '1000px' }}>
           <BottomNav screen={screen} setScreen={setScreen} />
         </div>
       </div>
