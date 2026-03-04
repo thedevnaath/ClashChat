@@ -1,27 +1,39 @@
-/* ClashChatz - Flat Design CSS */
+/* ClashChatz - Premium UI CSS */
 
 :root {
+  /* Light Mode Colors (Clean, Instagram Web Style) */
   --bg-gradient-start: #667eea;
   --bg-gradient-end: #764ba2;
+  --logo-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  --bg-body: #fafafa;
   --bg-card: #ffffff;
-  --bg-sidebar: #f9fafb;
-  --bg-muted: #f3f4f6;
-  --text-main: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-  --border-color: #e5e7eb;
+  --bg-hover: #f3f4f6;
+  --bg-muted: #eff6ff; /* Soft blue for active elements */
+  
+  --text-main: #262626;
+  --text-secondary: #737373;
+  --text-muted: #a3a3a3;
+  --border-color: #dbdbdb;
+  --chat-input-bg: #ffffff;
 }
 
 .dark {
-  --bg-gradient-start: #1e1b4b;
-  --bg-gradient-end: #312e81;
-  --bg-card: #1f2937;
-  --bg-sidebar: #111827;
-  --bg-muted: #374151;
-  --text-main: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-muted: #9ca3af;
-  --border-color: #374151;
+  /* Dark Mode Colors (OLED Black, High Contrast, Neon) */
+  --bg-gradient-start: #667eea;
+  --bg-gradient-end: #764ba2;
+  --logo-gradient: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); /* Neon Purple to Pink */
+  
+  --bg-body: #000000;
+  --bg-card: #000000;
+  --bg-hover: #1a1a1a;
+  --bg-muted: #121212;
+  
+  --text-main: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --border-color: #262626;
+  --chat-input-bg: #121212;
 }
 
 * {
@@ -30,38 +42,32 @@
   padding: 0;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  background: var(--bg-body);
   color: var(--text-main);
   transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: var(--bg-muted);
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--text-muted);
-  border-radius: 4px;
+  border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
@@ -70,63 +76,36 @@ body {
 button {
   transition: all 0.2s ease;
 }
-
 button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-
 button:active:not(:disabled) {
   transform: translateY(0);
 }
-
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* Input focus states */
-input:focus,
-textarea:focus {
-  border-color: var(--bg-gradient-start) !important;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+input:focus, textarea:focus {
+  border-color: #a855f7 !important;
+  box-shadow: none;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .app-container {
-    border-radius: 0 !important;
-    margin: 0 !important;
-  }
-  
   aside {
     display: none !important;
   }
 }
 
-/* Animation keyframes */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.topic-box {
-  animation: fadeIn 0.3s ease;
-}
-
 /* Selection styling */
 ::selection {
-  background: var(--bg-gradient-start);
+  background: #a855f7;
   color: white;
 }
-
 ::-moz-selection {
-  background: var(--bg-gradient-start);
+  background: #a855f7;
   color: white;
 }
